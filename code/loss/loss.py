@@ -23,6 +23,11 @@ class Loss(ABC):
 
 class MSELoss(Loss):
     
+    '''
+    class triển khai loss mean square error
+    loss = mean ((predicts - targets) ** 2)
+    '''
+    
     def forward(self, predictions, targets):
         return super().forward(predictions, targets)
     
@@ -32,13 +37,15 @@ class MSELoss(Loss):
     
     
 
-class BinartCrossEntropy(Loss):
+class BinaryCrossEntropy(Loss):
+    
+    '''
+    class triển khai loss binary cross entropy phân loại nhị phân
+    loss = mean ( tagrets * log(predicts) + (1 - targets) * log(1 - predicts))
+    '''
     
     def forward(self, predictions, targets):
         return super().forward(predictions, targets)
     
     def backward(self):
         return super().backward()
-
-    
-    
