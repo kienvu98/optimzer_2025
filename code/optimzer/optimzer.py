@@ -81,7 +81,7 @@ class Adam(Optimzer):
     1. cập nhập momentum bậc 1
         m(t) = beta_1 * m(t-1) + (1 - beta_1) * gradient(t)
     2. cập nhập momentum bậc 2
-        v(t) = beat_2 * v(t-1) - (1 - beta_1) * gradient(t) ** 2
+        v(t) = beat_2 * v(t-1) + (1 - beta_1) * gradient(t) ** 2
     3. bias correction
         m_hat(t) = m(t) / (1 - beta_1 ** t)
         v_hat(t) = v(t) / (1 - beta_2 ** t)
@@ -92,7 +92,7 @@ class Adam(Optimzer):
     def __init__(self, lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8):
         super().__init__(lr)
         self.beta_1 = beta_1
-        self.beta_2 = beta_1
+        self.beta_2 = beta_2
         self.epsilon = epsilon
         self.m = {} # momemtum bậc 1
         self.v = {} # momemtum bậc 2
