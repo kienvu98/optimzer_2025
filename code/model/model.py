@@ -31,10 +31,13 @@ class Dense(Layer):
         '''
         in_features: chiều dữ liệu đầu vào (chiều của data)
         out_features: chiều dữ liệu đầu ra (chiều của hidden)
+        optimzer: đối tượng thuật toán tối ưu
         '''
-        self.W = np.random.rand(in_features, out_features) * 0.01 # trọng số của layer có chiều [in_features, out_features]
+        self.W = np.random.rand(in_features, out_features) * 0.01 # trọng số của layer ma trận có kích cỡ [in_features, out_features]
         self.b = np.zeros((1, out_features)) # bias
         self.optimzer = optimzer
+        self.grad_W = "W"
+        self.grad_b = "b"
         
     def forward(self, inputs):
         '''
@@ -54,8 +57,8 @@ class Dense(Layer):
         return grad_input
     
     def step(self):
-        self.W = self.optimzer.update(self.W, self.dW)
-        self.b = self.optimzer.update(self.b, self.db)
+        self.W = self.optimzer.update(self.W, self.dW, self.grad_W)
+        self.b = self.optimzer.update(self.b, self.db, self.grad_b)
    
    
    
@@ -81,14 +84,14 @@ class Relu(Layer):
 class Sigmoid(Layer):
     
     '''
-    layer activertion sigmoid để kích hoạt phi tuyến
+    layer activertion sigmoid để kích hoạt phi tuyến sau layer linear
     Z = 1/ (1 + exp(-Z))
     trong mạng thì Z  = Dense()
     '''
     
     def forward(self, inputs):
         self.inputs = inputs
-        self.outputs = 1 / (1 + np.exp(self.inputs))
+        self.outputs = 1 / (1 + np.exp(-self.inputs))
         return self.outputs
     
     def backward(self, grad_out):
