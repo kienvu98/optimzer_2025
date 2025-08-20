@@ -2,7 +2,7 @@ import numpy as np
 import cupy as cp
 
 
-class Sequential():
+class Sequential:
     
     '''
     class triển khai sequential giống pytorch và keras
@@ -10,7 +10,12 @@ class Sequential():
     '''
     
     def __init__(self, layers):
-        self.layers = layers  # list các layer
+        self.layers = []  # list các layer
+        for i, layer in enumerate(layers):
+            # tự động đặt tên các layer nếu chưa có tên
+            if not hasattr(layer, "name") or layer.name is None:
+                layer.name = f"{layer.__class__.__name__}_{i}"
+            self.layers.append(layer)
         
     
     def forward(self, x):
@@ -38,3 +43,9 @@ class Sequential():
         '''
         for layer in self.layers:
             layer.step()
+            
+    
+    def summary(self):
+        '''
+        hàm show ra 
+        '''
