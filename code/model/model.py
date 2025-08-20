@@ -27,15 +27,18 @@ class Dense(Layer):
     layer linear Z = X * W  + b
     '''
     
-    def __init__(self, in_features, out_features, optimzer):
+    def __init__(self, in_features, out_features, optimzer, name=None):
         '''
         in_features: chiều dữ liệu đầu vào (chiều của data)
         out_features: chiều dữ liệu đầu ra (chiều của hidden)
         optimzer: đối tượng thuật toán tối ưu
         '''
+        self.in_features = in_features
+        self.out_features = out_features
         self.W = np.random.rand(in_features, out_features) * 0.01 # trọng số của layer ma trận có kích cỡ [in_features, out_features]
         self.b = np.zeros((1, out_features)) # bias
         self.optimzer = optimzer
+        self.name = name or f"Dense_{id(self)}"
         self.grad_W = "W"
         self.grad_b = "b"
         
@@ -59,6 +62,27 @@ class Dense(Layer):
     def step(self):
         self.W = self.optimzer.update(self.W, self.dW, self.grad_W)
         self.b = self.optimzer.update(self.b, self.db, self.grad_b)
+        
+        
+    def output_shape(self):
+        '''
+        hàm lấy thông tin out_features phục vụ summary 
+        '''
+        return (None, self.out_features)
+    
+
+    def input_shape(self):
+        '''
+        hàm lấy thông tin in_features phục vụ summary
+        '''
+        return (None, self.in_features)
+    
+    
+    def num_params(self):
+        '''
+        hàm tính tổng số trọng số qua lớp Dense
+        '''
+        return self.W.size + self.b.size
    
    
    
@@ -67,6 +91,9 @@ class Relu(Layer):
     layer activetion relu để kích hoạt phi tuyến sau layer linear
     Z = max(X, 0)
     '''
+    
+    def __init__(self, name=None):
+        self.name = name or f"Relu_{id(self)}"
     
     def forward(self, inputs):
         self.inputs = inputs
@@ -89,6 +116,9 @@ class Sigmoid(Layer):
     trong mạng thì Z  = Dense()
     '''
     
+    def __init__(self, name=None):
+        self.name = name or f"Sigmoid_{id(self)}"
+    
     def forward(self, inputs):
         self.inputs = inputs
         self.outputs = 1 / (1 + np.exp(-self.inputs))
@@ -100,3 +130,20 @@ class Sigmoid(Layer):
     def step(self):
         pass
         
+      
+        
+class Dropout(Layer):
+    
+    '''
+    layer dropout để tắt 1 cập nhập học 1 số param khi trainning
+    Tránh overfiting khi trainning
+    Khi suy luận sẽ không tắt
+    '''
+    
+    def __init__(self):
+        super().__init__()
+    
+    def forward(self, inputs):
+        return super().forward(inputs)
+    
+    
