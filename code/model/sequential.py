@@ -47,5 +47,24 @@ class Sequential:
     
     def summary(self):
         '''
-        hàm show ra 
+        hàm show ra model
         '''
+        print("Model Summary")
+        print("-" * 90)
+        print(f"{'Idx':<5}{'Layer':<15}{'Name':<20}{'Input':<20}{'Output':<20}{'#Params':>8}")
+        print("-" * 90)
+        
+        total_params = 0
+        
+        for i, layer in enumerate(self.layers):
+            layer_type = layer.__classs__.__name__
+            name = getattr(layer, "name", f"{layer_type}_{id}")
+            in_shape = getattr(layer, "input_shape", lambda: "-")()
+            out_shape = getattr(layer, "output_shape", lambda: "-")()
+            num_params = getattr(layer, "num_params", lambda: "-")()
+            total_params += num_params
+            print(f"{i:<5}{layer_type:<15}{name:<20}{in_shape:<20}{out_shape:<20}{num_params:>8}")
+        
+        print("-" * 90)
+        print(f"Total parameters: {total_params}")
+        
