@@ -19,6 +19,16 @@ class Layer:
         hàm cập cập tham số theo ct tối ưu
         '''
         raise NotImplementedError
+    
+    def state_dict(self):
+        '''
+        hàm để lưu thông tin của từng layer --> lưu model
+        '''
+        
+    def load_state_dict(self, state):
+        '''
+        hàm load thông tin của layer, set lại trọng số cho layer --> load model
+        '''
 
 
 
@@ -63,6 +73,18 @@ class Dense(Layer):
         self.W = self.optimzer.update(self.W, self.dW, self.grad_W)
         self.b = self.optimzer.update(self.b, self.db, self.grad_b)
         
+    
+    def state_dict(self):
+        return  {
+            'W': self.W,
+            'b': self.b
+        }
+        
+    
+    def load_state_dict(self, state):
+        self.W = state['W']
+        self.b = self['b']
+        
         
     def output_shape(self):
         '''
@@ -106,6 +128,12 @@ class Relu(Layer):
     def step(self):
         pass
     
+    def state_dict(self):
+        pass
+    
+    def load_state_dict(self, state):
+        pass
+    
     
     
 class Sigmoid(Layer):
@@ -130,6 +158,11 @@ class Sigmoid(Layer):
     def step(self):
         pass
         
+    def state_dict(self):
+        pass
+    
+    def load_state_dict(self, state):
+        pass
       
         
 class Dropout(Layer):
