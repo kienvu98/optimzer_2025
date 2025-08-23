@@ -1,8 +1,9 @@
 import numpy as np
 import cupy as cp
 
+STATE_DICT = "state_dict"
 
-class Sequential:
+class Model:
     
     '''
     class triển khai sequential giống pytorch và keras
@@ -68,3 +69,23 @@ class Sequential:
         print("-" * 90)
         print(f"Total parameters: {total_params}")
         
+        
+    def state_dict(self):
+        '''
+        hàm dùng để lưu lại thông layer
+        '''
+        state = dict()
+        for layer in self.layers:
+            if hasattr(layer, STATE_DICT):
+                state[layer.name] = layer.state_dict()
+                
+        return state
+    
+    
+    def load_state_dict(self, state):
+        '''
+        set lại và lưu thông tin khi load model
+        '''
+        for layer in self.layers:
+            if layer.name in state:
+                layer.load_state_dict(state[layer.name])
