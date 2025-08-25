@@ -1,8 +1,9 @@
 import numpy as np
 import cupy as cp
 
+STATE_DICT = "state_dict"
 
-class Sequential:
+class Model:
     
     '''
     class triển khai sequential giống pytorch và keras
@@ -57,14 +58,35 @@ class Sequential:
         total_params = 0
         
         for i, layer in enumerate(self.layers):
-            layer_type = layer.__classs__.__name__
+            layer_type = layer.__class__.__name__
             name = getattr(layer, "name", f"{layer_type}_{id}")
             in_shape = getattr(layer, "input_shape", lambda: "-")()
             out_shape = getattr(layer, "output_shape", lambda: "-")()
             num_params = getattr(layer, "num_params", lambda: "-")()
-            total_params += num_params
-            print(f"{i:<5}{layer_type:<15}{name:<20}{in_shape:<20}{out_shape:<20}{num_params:>8}")
+            if (isinstance(num_params, int)):
+                total_params += num_params
+            print(f"{i:<5}{layer_type:<15}{name:<20}{str(in_shape):<20}{str(out_shape):<20}{num_params:>8}")
         
         print("-" * 90)
         print(f"Total parameters: {total_params}")
         
+        
+    def state_dict(self):
+        '''
+        hàm dùng để lưu lại thông layer
+        '''
+        state = dict()
+        for layer in self.layers:
+            if hasattr(layer, STATE_DICT):
+                state[layer.name] = layer.state_dict()
+                
+        return state
+    
+    
+    def load_state_dict(self, state):
+        '''
+        set lại và lưu thông tin khi load model
+        '''
+        for layer in self.layers:
+            if layer.name in state:
+                layer.load_state_dict(state[layer.name])
