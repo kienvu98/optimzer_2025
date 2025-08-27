@@ -1,5 +1,4 @@
-import numpy as np
-import cupy as cp
+from optimzer_project.code.backend.backend import xp as np
 from abc import ABC, abstractmethod
 
 
