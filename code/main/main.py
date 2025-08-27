@@ -4,6 +4,7 @@ from optimzer_project.code.model.model import Dense
 from optimzer_project.code.model.model import Relu
 from optimzer_project.code.model.model import Sigmoid
 from optimzer_project.code.optimzer.optimzer import Momentum
+from optimzer_project.code.backend.backend import is_gpu_enable
 
 def main():
     momentum = Momentum()
@@ -16,5 +17,9 @@ def main():
     model.summary()
 
 if __name__ == "__main__":
+    if is_gpu_enable():
+        print('project run with gpu')
+    else:
+        print('project run with cpu')
     main()
     
