@@ -45,7 +45,7 @@ class Trainer:
             self.model.backward(grad)
             # cập nhập lại trọng số
             self.model.step()
-            
+        
         avg_loss = total_loss / total_samples
         y_true = np.concatenate(all_targets)
         y_predicts = np.concatenate(all_preds)
