@@ -85,12 +85,19 @@ class Trainer:
         return avg_loss, acc
     
     
-    def fit(self):
+    def fit(self, patience=10, min_delta=1e-4):
         '''
         hàm gọi để thực hiện trainning model
+        - patience: số epoch cho phép không cải thiện
+        - min_delta: mức cải thiện tối thiểu để được tính là "giảm"
         '''
         self.train_loss_list = []
         self.val_loss_list = []
+        self.train_acc_list = []
+        self.val_acc_list = []
+        
+        best_val_loss = float('inf')
+        wait = 0  # số epoch không cải thiện
         for epoch in range(self.epochs):
             print(f"\n📘 Epoch {epoch+1}/{self.epochs}")
             start_time = time.time()
@@ -102,5 +109,18 @@ class Trainer:
             
             self.train_loss_list.append(train_loss)
             self.val_loss_list.append(val_loss)
-    
+            self.train_acc_list.append(train_acc)
+            self.val_acc_list.append(val_acc)
+
+            # Kiểm tra điều kiện early stopping
+            if val_loss < best_val_loss - min_delta:
+                best_val_loss = val_loss
+                wait = 0  # reset bộ đếm
+            else:
+                wait += 1
+                print(f"Val loss không cải thiện ({wait}/{patience})")
+
+            if wait >= patience:
+                print(f"\n Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
+                break
         

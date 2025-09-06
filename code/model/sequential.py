@@ -16,6 +16,7 @@ class Model:
             if not hasattr(layer, "name") or layer.name is None:
                 layer.name = f"{layer.__class__.__name__}_{i}"
             self.layers.append(layer)
+        self._backup = {} # phục vụ backtracking linse search
         
     
     def forward(self, x):
@@ -93,3 +94,21 @@ class Model:
         for layer in self.layers:
             if layer.name in state:
                 layer.load_state_dict(state[layer.name])
+                
+                
+    def override_param(self, key, new_value):
+        # Tìm layer theo tên
+        for layer in self.layers:
+            if hasattr(layer, 'name') and key.startswith(layer.name):
+                param_type = key.split('_')[-1]  # 'W' hoặc 'b'
+                # Lưu bản sao tham số gốc
+                self._backup[key] = getattr(layer, param_type)
+                # Gán giá trị mới tạm thời
+                setattr(layer, param_type, new_value)
+
+    def restore_param(self, key):
+        for layer in self.layers:
+            if hasattr(layer, 'name') and key.startswith(layer.name):
+                param_type = key.split('_')[-1]
+                # Khôi phục tham số gốc
+                setattr(layer, param_type, self._backup[key])

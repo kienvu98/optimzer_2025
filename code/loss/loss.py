@@ -53,6 +53,9 @@ class BinaryCrossEntropy(Loss):
     
     def backward(self):
         return (self.predictions - self.targets) / self.targets.shape[0]
+    
+    def __call__(self, predictions, targets):
+        return self.forward(predictions, targets)
 
 
 
