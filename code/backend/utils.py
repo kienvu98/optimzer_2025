@@ -27,32 +27,55 @@ def sigmoid_to_label(probabilities, threshold=0.5):
 def accuracy_score(y_true, y_predict):
     return np.mean(y_true == y_predict).astype(np.float32)
 
-def plot_metrics(trainer, save_path="training_metrics.png"):
+def plot_metrics(trainer, save_path):
     epochs = range(1, len(trainer.train_loss_list) + 1)
-    plt.figure(figsize=(10, 5))
-    
-    train_loss_list =  [float(loss) for loss in trainer.train_loss_list]
-    val_loss_list = [float(loss) for loss in trainer.val_loss_list]
 
-    # Biểu đồ Train Loss
-    plt.subplot(1, 2, 1)
-    plt.plot(epochs,train_loss_list, label='Train Loss', color='blue')
-    plt.ylabel('Epoch')
-    plt.xlabel('Loss')
+    # Chuyển dữ liệu về dạng float
+    train_loss_list = [float(loss) for loss in trainer.train_loss_list]
+    val_loss_list = [float(loss) for loss in trainer.val_loss_list]
+    train_acc_list = [float(acc) for acc in trainer.train_acc_list]
+    val_acc_list = [float(acc) for acc in trainer.val_acc_list]
+
+    # Tạo figure với 2 hàng, 2 cột
+    plt.figure(figsize=(12, 8))
+
+    # Ô 1: Train Loss
+    plt.subplot(2, 2, 1)
+    plt.plot(epochs, train_loss_list, label='Train Loss', color='blue')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
     plt.title('Training Loss')
     plt.grid(True)
     plt.legend()
 
-    # Biểu đồ Validation Accuracy
-    plt.subplot(1, 2, 2)
-    plt.plot(epochs, val_loss_list, label='Validation Accuracy', color='green')
-    plt.ylabel('Epoch')
-    plt.xlabel('Accuracy')
+    # Ô 2: Validation Loss
+    plt.subplot(2, 2, 2)
+    plt.plot(epochs, val_loss_list, label='Validation Loss', color='orange')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Validation Loss')
+    plt.grid(True)
+    plt.legend()
+
+    # Ô 3: Train Accuracy
+    plt.subplot(2, 2, 3)
+    plt.plot(epochs, train_acc_list, label='Train Accuracy', color='green')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Training Accuracy')
+    plt.grid(True)
+    plt.legend()
+
+    # Ô 4: Validation Accuracy
+    plt.subplot(2, 2, 4)
+    plt.plot(epochs, val_acc_list, label='Validation Accuracy', color='red')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
     plt.title('Validation Accuracy')
     plt.grid(True)
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig(save_path)  # Lưu biểu đồ
+    plt.savefig(save_path)
     plt.show()
     print(f"📁 Biểu đồ đã được lưu tại: {save_path}")

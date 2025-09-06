@@ -38,7 +38,51 @@ class SGD(Optimzer):
     def update(self, param, grad, key=None):
         return param - self.lr * grad
     
- 
+    
+
+class GD_LineSearch(Optimzer):
+    
+    '''
+    class triển khai GD với bachtracking line search
+    '''
+    
+    def __init__(self, lr=1.0, rho=0.5, c=1e-4, loss_fn=None, model=None):
+        super().__init__(lr)
+        self.rho = rho # hệ số co
+        self.c = c # hệ số giảm
+        self.loss_fn = loss_fn # hàm mất mát để đánh giá
+        self.model = model 
+    
+    def update(self, param, grad, key=None):
+        if key is None:
+            raise ValueError("Backtracking optimizer requires a unique key.")
+        if self.loss_fn is None or self.model is None:
+            raise ValueError("Backtracking optimizer requires loss_fn and model.")
+    
+        alpha = self.lr
+    
+        # Tính loss hiện tại
+        loss_current = self.loss_fn(self.model)
+    
+        # Backtracking loop
+        while True:
+            new_param = param - alpha * grad
+
+            # Override tham số tạm thời
+            self.model.override_param(key, new_param)
+            loss_new = self.loss_fn(self.model)
+            self.model.restore_param(key)
+
+            # Kiểm tra điều kiện Armijo
+            grad_norm_sq = np.linalg.norm(grad) ** 2
+            if loss_new <= loss_current - self.c * alpha * grad_norm_sq:
+                break
+
+            alpha *= self.rho
+
+        return param - alpha * grad
+    
+    
     
 class Momentum(Optimzer):
     
@@ -106,9 +150,6 @@ class Adam(Optimzer):
         if key is None:
             raise ValueError("Adam optimzer requires a unique key.") # truyền để phân biệt là tính velocity cho W hay b
         
-        # kiểm tra shape tránh lỗi broadcasting
-        if self.velocity[key].shape != grad.shape:
-            raise ValueError(f"Shape mismatch for key '{key}': velocity {self.velocity[key].shape} vs grad {grad.shape}")
         
         # Khởi tạo m, v, t
         if key not in self.m:
