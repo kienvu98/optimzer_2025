@@ -44,7 +44,7 @@ class Dense(Layer):
         '''
         self.in_features = in_features
         self.out_features = out_features
-        self.W = np.random.rand(in_features, out_features) * 0.01 # trọng số của layer ma trận có kích cỡ [in_features, out_features]
+        self.W = np.random.randn(in_features, out_features) * np.sqrt(2 / in_features) # trọng số của layer ma trận có kích cỡ [in_features, out_features]
         self.b = np.zeros((1, out_features)) # bias
         self.optimzer = optimzer
         self.name = name or f"Dense_{id(self)}"
