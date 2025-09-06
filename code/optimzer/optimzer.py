@@ -63,8 +63,13 @@ class Momentum(Optimzer):
         # khởi tạo velocity
         if key not in self.velocity:
             self.velocity[key] = np.zeros_like(grad)
+            
+        # kiểm tra shape tránh lỗi broadcasting
+        if self.velocity[key].shape != grad.shape:
+            raise ValueError(f"Shape mismatch for key '{key}': velocity {self.velocity[key].shape} vs grad {grad.shape}")
         
         # cập nhập velocity
+        #print("****", grad.shape)
         self.velocity[key] = self.momentum * self.velocity[key] - self.lr * grad
         
         # cập nhập tham số
@@ -100,6 +105,10 @@ class Adam(Optimzer):
     def update(self, param, grad, key=None):
         if key is None:
             raise ValueError("Adam optimzer requires a unique key.") # truyền để phân biệt là tính velocity cho W hay b
+        
+        # kiểm tra shape tránh lỗi broadcasting
+        if self.velocity[key].shape != grad.shape:
+            raise ValueError(f"Shape mismatch for key '{key}': velocity {self.velocity[key].shape} vs grad {grad.shape}")
         
         # Khởi tạo m, v, t
         if key not in self.m:
