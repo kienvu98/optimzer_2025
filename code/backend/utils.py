@@ -1,4 +1,5 @@
 from optimzer_project.code.backend.backend import xp as np
+from matplotlib import pyplot as plt
 
 def split_arrays(X, y, ratio=0.8, shuffe=True):
     num_samples = X.shape[0]
@@ -25,3 +26,33 @@ def sigmoid_to_label(probabilities, threshold=0.5):
 
 def accuracy_score(y_true, y_predict):
     return np.mean(y_true == y_predict).astype(np.float32)
+
+def plot_metrics(trainer, save_path="training_metrics.png"):
+    epochs = range(1, len(trainer.train_loss_list) + 1)
+    plt.figure(figsize=(10, 5))
+    
+    train_loss_list =  [float(loss) for loss in trainer.train_loss_list]
+    val_loss_list = [float(loss) for loss in trainer.val_loss_list]
+
+    # Biểu đồ Train Loss
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs,train_loss_list, label='Train Loss', color='blue')
+    plt.ylabel('Epoch')
+    plt.xlabel('Loss')
+    plt.title('Training Loss')
+    plt.grid(True)
+    plt.legend()
+
+    # Biểu đồ Validation Accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, val_loss_list, label='Validation Accuracy', color='green')
+    plt.ylabel('Epoch')
+    plt.xlabel('Accuracy')
+    plt.title('Validation Accuracy')
+    plt.grid(True)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig(save_path)  # Lưu biểu đồ
+    plt.show()
+    print(f"📁 Biểu đồ đã được lưu tại: {save_path}")

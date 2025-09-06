@@ -23,7 +23,9 @@ class Model:
         forward qua từng layer trong list
         '''
         for layer in self.layers:
+            #print(layer.name)
             x = layer.forward(x)
+            #print(x.shape)
         return x
     
     
@@ -32,8 +34,10 @@ class Model:
         backward qua từng layer
         grad_out: kết quả của đạo hàm ở tầng trước
         '''
-        for layer in self.layers:
+        for layer in reversed(self.layers):
+            #print(layer.name)
             grad_out = layer.backward(grad_out)
+            #print(grad_out.shape)
         return grad_out
     
     

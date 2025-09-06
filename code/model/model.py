@@ -48,8 +48,8 @@ class Dense(Layer):
         self.b = np.zeros((1, out_features)) # bias
         self.optimzer = optimzer
         self.name = name or f"Dense_{id(self)}"
-        self.grad_W = "W"
-        self.grad_b = "b"
+        self.grad_W = f"{self.name}_W"
+        self.grad_b = f"{self.name}_b"
         
     def forward(self, inputs):
         '''
@@ -61,8 +61,13 @@ class Dense(Layer):
         return outputs
     
     def backward(self, grad_output):
+        #print("------", grad_output.shape)
+        #print("------", self.inputs.shape)
+        #print(self.W.shape)
         self.dW = self.inputs.T @ grad_output
         self.db = np.sum(grad_output, axis=0, keepdims=True)
+        #print("------", self.dW.shape)
+        
         
         # gradient trả về cho layer phía trước
         grad_input = grad_output @ self.W.T
@@ -82,7 +87,7 @@ class Dense(Layer):
     
     def load_state_dict(self, state):
         self.W = state['W']
-        self.b = self['b']
+        self.b = state['b']
         
         
     def output_shape(self):
