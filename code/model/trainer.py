@@ -85,7 +85,7 @@ class Trainer:
         return avg_loss, acc
     
     
-    def fit(self, patience=10, min_delta=1e-3, grad_threshold=1e-3):
+    def fit(self, patience=10, min_delta=1e-3, grad_threshold=1e-3, start_epoch=20):
         '''
         hàm gọi để thực hiện trainning model
         - patience: số epoch cho phép không cải thiện
@@ -95,6 +95,7 @@ class Trainer:
         self.val_loss_list = []
         self.train_acc_list = []
         self.val_acc_list = []
+        self.epoch_num = 0;
         
         best_val_loss = float('inf')
         wait = 0  # số epoch không cải thiện
@@ -123,21 +124,21 @@ class Trainer:
             #if wait >= patience:
             #    print(f"\n Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
             #    break
-            
-            if min_delta < abs(best_val_loss - train_loss):
-                best_val_loss = val_loss
-                wait = 0
-            else:
-                wait += 1
-                print(f"Train loss không cải thiện ({wait}/{patience})")
-                
-            grad_norm = self.model.get_total_grad_norm()
-            if grad_norm < grad_threshold:
-                print(f"Dừng sớm tại epoch {epoch+1} do gradient quá nhỏ: {grad_norm:.2e}")
-                break
+            if epoch > start_epoch:
+                if min_delta < abs(best_val_loss - train_loss) :
+                    best_val_loss = train_loss
+                    wait = 0
+                else:
+                    wait += 1
+                    print(f"Train loss không cải thiện ({wait}/{patience})")
+                    
+                grad_norm = self.model.get_total_grad_norm()
+                if grad_norm < grad_threshold:
+                    print(f"Dừng sớm tại epoch {epoch+1} do gradient quá nhỏ: {grad_norm:.2e}")
+                    break
 
-            if wait >= patience:
-                print(f"Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
-                break
+                if wait >= patience:
+                    print(f"Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
+                    break
             
         
