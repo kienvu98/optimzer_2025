@@ -112,3 +112,14 @@ class Model:
                 param_type = key.split('_')[-1]
                 # Khôi phục tham số gốc
                 setattr(layer, param_type, self._backup[key])
+                
+                
+    def get_total_grad_norm(self):
+        total_norm = 0.0
+        for layer in self.layers:
+            if hasattr(layer, 'dW'):
+                total_norm += np.linalg.norm(layer.dW)
+            if hasattr(layer, 'db'):
+                total_norm += np.linalg.norm(layer.db)
+                
+        return total_norm
