@@ -10,8 +10,12 @@ from optimzer_project.code.backend.backend import xp as np
 from optimzer_project.code.backend.data_loader import DataLoader
 from optimzer_project.code.loss.loss import BinaryCrossEntropy
 from optimzer_project.code.model.trainer import Trainer
+import time
+import json
+import os
 
-def main(file_name_X, file_name_y):
+
+def main(file_name_X, file_name_y, folder):
     
     #momentum = Momentum()
     
@@ -33,7 +37,9 @@ def main(file_name_X, file_name_y):
     # khởi tạo loss 
     loss = BinaryCrossEntropy()
 
-    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    #list_lr = [0.2]#, 0.3]
+    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
@@ -50,6 +56,7 @@ def main(file_name_X, file_name_y):
     }
     for name, optimizer in optimizers.items():
         dict_lr = {}
+        dict_time_loss = {}
         for lr in list_lr :
             # tạo DataLoader
             if name == "GD" or name == "GD_LineSearch": 
@@ -87,9 +94,21 @@ def main(file_name_X, file_name_y):
             )
 
             # Huấn luyện
-            trainer.fit()
+            start_time = time.time()
+            trainer.fit(min_delta=1e-4)
+            
+            time_train = time.time() - start_time
+            dict_time_loss.setdefault(lr, {})['time'] = time_train
             dict_lr[lr] = trainer.train_loss_list
-        plot_metrics_optmzer(dict_lr, name)
+            loss_min = min(trainer.train_loss_list)
+            dict_time_loss.setdefault(lr, {})['loss_min'] = loss_min.tolist()
+            dict_time_loss.setdefault(lr, {})['iteration'] = trainer.epoch_num
+        
+        file_path= os.path.join(folder, name)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(dict_time_loss, f, ensure_ascii=False, indent=4)
+            
+        plot_metrics_optmzer(dict_lr, file_path)
     
     #traine = Trainer(model=model, train_loader=train_loader,
      #                val_loader=val_loader, loss=loss,  
@@ -106,7 +125,8 @@ if __name__ == "__main__":
         print('project run with cpu')
     X_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_X.npy'
     y_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_y.npy'
-    main(X_file, y_file)
+    file_path = '/workspace/optimzer_project/code/folder_image_file_train'
+    main(X_file, y_file, file_path)
     #X = np.array(np.load(X_file))
     #y= np.array(np.load(y_file))
     #print(X.shape)

@@ -86,11 +86,13 @@ def plot_metrics_optmzer(dict_lr, save_path):
     vẽ biểu đồ loss của mỗi lr
     '''
     plt.figure(figsize=(10, 6))
-
-    for label, values in dict_lr.items():
+    
+    colors = plt.cm.tab10.colors  # có 10 màu phân biệt rõ
+    for i, (label, values) in enumerate(dict_lr.items()):  # dùng enumerate
         epochs = range(1, len(values) + 1)
         train_loss_list = [float(loss) for loss in values]
-        plt.plot(epochs, train_loss_list, label=label)  # mỗi đường có màu tự động khác nhau
+
+        plt.plot(epochs, train_loss_list, label=f"lr={label}", color=colors[i % len(colors)])  # mỗi đường có màu tự động khác nhau
 
     plt.xlabel("Epoch")
     plt.ylabel("Metric Value")
