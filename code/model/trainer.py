@@ -85,7 +85,7 @@ class Trainer:
         return avg_loss, acc
     
     
-    def fit(self, patience=10, min_delta=1e-4):
+    def fit(self, patience=10, min_delta=1e-3, grad_threshold=1e-3):
         '''
         hàm gọi để thực hiện trainning model
         - patience: số epoch cho phép không cải thiện
@@ -113,14 +113,31 @@ class Trainer:
             self.val_acc_list.append(val_acc)
 
             # Kiểm tra điều kiện early stopping
-            if val_loss < best_val_loss - min_delta:
+            #if val_loss < best_val_loss - min_delta:
+            #    best_val_loss = val_loss
+            #    wait = 0  # reset bộ đếm
+            #else:
+             #   wait += 1
+              #  print(f"Val loss không cải thiện ({wait}/{patience})")
+
+            #if wait >= patience:
+            #    print(f"\n Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
+            #    break
+            
+            if min_delta < abs(best_val_loss - train_loss):
                 best_val_loss = val_loss
-                wait = 0  # reset bộ đếm
+                wait = 0
             else:
                 wait += 1
-                print(f"Val loss không cải thiện ({wait}/{patience})")
+                print(f"Train loss không cải thiện ({wait}/{patience})")
+                
+            grad_norm = self.model.get_total_grad_norm()
+            if grad_norm < grad_threshold:
+                print(f"Dừng sớm tại epoch {epoch+1} do gradient quá nhỏ: {grad_norm:.2e}")
+                break
 
             if wait >= patience:
-                print(f"\n Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
+                print(f"Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
                 break
+            
         

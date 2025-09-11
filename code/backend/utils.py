@@ -79,3 +79,25 @@ def plot_metrics(trainer, save_path):
     plt.savefig(save_path)
     plt.show()
     print(f"📁 Biểu đồ đã được lưu tại: {save_path}")
+    
+    
+def plot_metrics_optmzer(dict_lr, save_path):
+    '''
+    vẽ biểu đồ loss của mỗi lr
+    '''
+    plt.figure(figsize=(10, 6))
+
+    for label, values in dict_lr.items():
+        epochs = range(1, len(values) + 1)
+        train_loss_list = [float(loss) for loss in values]
+        plt.plot(epochs, train_loss_list, label=label)  # mỗi đường có màu tự động khác nhau
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Metric Value")
+    plt.title("Optimizer Comparison")
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.show()
+    print(f"Biểu đồ đã được lưu tại: {save_path}")
