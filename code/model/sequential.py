@@ -118,8 +118,9 @@ class Model:
         total_norm = 0.0
         for layer in self.layers:
             if hasattr(layer, 'dW'):
-                total_norm += np.linalg.norm(layer.dW)
+                total_norm += np.linalg.norm(layer.dW) ** 2
             if hasattr(layer, 'db'):
-                total_norm += np.linalg.norm(layer.db)
-                
+                total_norm += np.linalg.norm(layer.db) ** 2
+        total_norm = np.sqrt(total_norm)
+              
         return total_norm
