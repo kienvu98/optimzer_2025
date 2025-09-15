@@ -94,25 +94,7 @@ class Model:
         for layer in self.layers:
             if layer.name in state:
                 layer.load_state_dict(state[layer.name])
-                
-                
-    def override_param(self, key, new_value):
-        # Tìm layer theo tên
-        for layer in self.layers:
-            if hasattr(layer, 'name') and key.startswith(layer.name):
-                param_type = key.split('_')[-1]  # 'W' hoặc 'b'
-                # Lưu bản sao tham số gốc
-                self._backup[key] = getattr(layer, param_type)
-                # Gán giá trị mới tạm thời
-                setattr(layer, param_type, new_value)
-
-    def restore_param(self, key):
-        for layer in self.layers:
-            if hasattr(layer, 'name') and key.startswith(layer.name):
-                param_type = key.split('_')[-1]
-                # Khôi phục tham số gốc
-                setattr(layer, param_type, self._backup[key])
-                
+                 
                 
     def get_total_grad_norm(self):
         total_norm = 0.0
@@ -124,3 +106,48 @@ class Model:
         total_norm = np.sqrt(total_norm)
               
         return total_norm
+    
+    
+    def get_params(self):
+        '''
+        duỗi các tham số để phục vụ line search
+        '''
+        flat_params = []
+        for layer in self.layers:
+            if hasattr(layer, "get_params"):
+                for p in layer.get_params():
+                    flat_params.append(p.flatten())
+        return np.concatenate(flat_params)
+    
+    
+    def set_params(self, flat_params):
+        """
+        Gán lại tham số từ vector phẳng
+        """
+        offset = 0
+        for layer in self.layers:
+            if hasattr(layer, "get_params") and hasattr(layer, "set_params"):
+                params = layer.get_params()
+                if params is not None:
+                    new_params = []
+                    for p in params:
+                        size = p.size
+                        new_p = flat_params[offset:offset+size].reshape(p.shape)
+                        new_params.append(new_p)
+                        offset += size
+                    # gán lại cho layer
+                    layer.set_params(new_params)
+    
+    
+    def get_grads(self):
+        '''
+        Lấy gradient của toàn bộ model thành vector phẳng
+        (sau khi đã backward)
+        '''
+        flat_grads = []
+        for layer in self.layers:
+            if hasattr(layer, 'dW') and layer.dW is not None:
+                flat_grads.append(layer.dW.flatten())
+            if hasattr(layer, 'db') and layer.db is not None:
+                flat_grads.append(layer.db.flatten())
+        return np.concatenate(flat_grads)

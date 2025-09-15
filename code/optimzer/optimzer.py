@@ -1,4 +1,5 @@
-from optimzer_project.code.backend.backend import xp as np
+from optimzer_project.code.backend.backend import xp as np, is_gpu_enable, _cupy_cg, _cupy_linearOperator
+from scipy.sparse.linalg import LinearOperator, cg
 
 from abc import ABC, abstractmethod
 
@@ -14,6 +15,16 @@ class Optimzer(ABC):
     
     @abstractmethod
     def update(self, param, grad, key=None):
+        '''
+        triển khai thuật toán tối ưu
+        '''
+        pass
+    
+    @abstractmethod
+    def step(self, model):
+        '''
+        cập nhập tham số do các class tối ưu quản lý
+        '''
         pass
     
   
@@ -23,66 +34,146 @@ class GD(Optimzer):
     '''
     class triển khai thuật toán gradient descent
     '''
+    
+    # def __init__(self, model lr=0.01):
+    #     super().__init__(lr)
         
     def update(self, param, grad, key=None):
         return param - self.lr * grad
     
+    
+    def step(self, model):
+        for param, grad, key in model.get_grads:
+            if grad is not None:
+                param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
+            
+            
 
-
-class SGD(Optimzer):
+class LineSearch(Optimzer):
     
     '''
-    class triển khai thuật toán SGD
+    class triển khai thuật toán back tracking line search
+    ct thuật toán: đk Armijo
+    f(x_k + alpha * d_k) <= f(x_k) + c * alpha * gradient()f(x_k).T * dk
+    dk: hướng đi
+    vd: với GD -> dk = - gradient()*f(x_k)
+            newton -> dk = -Hessian_k ^ -1 * gradient()f(x_k)
     '''
     
-    def update(self, param, grad, key=None):
-        return param - self.lr * grad
-    
-    
-
-class GD_LineSearch(Optimzer):
-    
-    '''
-    class triển khai GD với bachtracking line search
-    '''
-    
-    def __init__(self, lr=1.0, rho=0.5, c=1e-4, loss_fn=None, model=None):
+    def __init__(self, model, loss_fn, direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, max_iter=50, reuse_lr=True, cg_tol=1e-4):
         super().__init__(lr)
-        self.rho = rho # hệ số co
-        self.c = c # hệ số giảm
-        self.loss_fn = loss_fn # hàm mất mát để đánh giá
-        self.model = model 
-    
-    def update(self, param, grad, key=None):
-        if key is None:
-            raise ValueError("Backtracking optimizer requires a unique key.")
-        if self.loss_fn is None or self.model is None:
-            raise ValueError("Backtracking optimizer requires loss_fn and model.")
-    
-        alpha = self.lr
-    
-        # Tính loss hiện tại
-        loss_current = self.loss_fn(self.model)
-    
-        # Backtracking loop
-        while True:
-            new_param = param - alpha * grad
+        self.model = model
+        self.loss_fn = loss_fn
+        #self.hess_fn = hess_fn # tính đạo hàm bậc 2 phục vụ newton
+        self.direction = direction
+        self.rho = rho # độ co
+        self.c = c 
+        self.min_alpha = min_alpha # nếu alpha quá nghỉ cũng dừng line-search
+        self.max_iter = max_iter
+        self.reuse_lr = reuse_lr # cờ để thuật toán đánh dấu mỗi vòng lặp dùng lr config đầu hay dùng lr tối ưu vòng lặp trước
+        self.last_alpha = lr
+        self.cg_tol = cg_tol
+        
+        
+    # --- Gauss-Newton Hv product ---
+    def gauss_newton_hv(self, v):
+        flat_params = self.model.get_params()
+        y_pred = self.loss_fn.predicts.copy()
+        target = self.loss_fn.targets
+        eps = 1e-5
 
-            # Override tham số tạm thời
-            self.model.override_param(key, new_param)
-            loss_new = self.loss_fn(self.model)
-            self.model.restore_param(key)
+        # Perturbation
+        self.model.set_params(flat_params + eps * v)
+        y_perturbed = self.model.forward(self.loss_fn.input)
+        Jv = (y_perturbed - y_pred) / eps
 
-            # Kiểm tra điều kiện Armijo
-            grad_norm_sq = np.linalg.norm(grad) ** 2
-            if loss_new <= loss_current - self.c * alpha * grad_norm_sq:
-                break
+        # Backprop qua loss
+        self.loss_fn.predicts = y_pred + Jv
+        grad_out = self.loss_fn.backward()
+        self.model.backward(grad_out)
+        Hv = self.model.get_grads()
+
+        # Reset state
+        self.model.set_params(flat_params)
+        self.loss_fn.predicts = y_pred
+        self.loss_fn.targets = target
+        return Hv
+    
+        
+    def get_direction(self, grad):
+        if self.direction == "gd":
+            return -grad
+        elif self.direction == "newton":
+            Hv_func = lambda v: self.gauss_newton_hv(v)
+
+            if not is_gpu_enable:
+                lin_op = LinearOperator((grad.size, grad.size), matvec=Hv_func)
+                d, _ = cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
+            else:
+                lin_op = _cupy_linearOperator((grad.size, grad.size), matvec=Hv_func)
+                d, _ = _cupy_cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
+
+            return d
+        else:
+            raise ValueError("direction must be 'gd' or 'newton'")
+            
+    
+    # --- Backtracking line search ---
+    def backtracking(self, d, g):
+        f_x = self.loss_fn()
+        alpha = self.last_alpha if self.reuse_lr else self.lr
+        flat_params = self.model.get_params()
+
+        for _ in range(self.max_iter):
+            self.model.set_params(flat_params + alpha * d)
+            self.loss_fn.predicts = self.model.forward(self.loss_fn.input)
+            f_new = self.loss_fn()
+
+            if f_new <= f_x + self.c * alpha * np.dot(g, d):
+                self.last_alpha = alpha
+                self.model.set_params(flat_params)
+                return alpha
 
             alpha *= self.rho
+            if alpha < self.min_alpha:
+                print(f" Alpha quá nhỏ ({alpha:.2e}), dừng line search.")
+                break
 
-        return param - alpha * grad
+        self.model.set_params(flat_params)
+        return alpha
     
     
+    # --- Cập nhật tham số ---
+    def update(self):
+        # --- 1. Tính loss hiện tại ---
+        f_x = self.loss_fn()
+        
+        # --- 2. Forward & Backward để có gradient ---
+        self.loss_fn.predicts = self.model.forward(self.loss_fn.input)
+        grad_out = self.loss_fn.backward()
+        self.model.backward(grad_out)
+        
+        # --- 3. Lấy gradient ---
+        g = self.model.get_grads().ravel()
+        
+        # --- 4. Tính hướng đi ---
+        d = self.get_direction(g)
+        
+        # --- 5. Backtracking tìm alpha ---
+        alpha = self.backtracking(d, g)
+        
+        # --- 6. Update params ---
+        flat_params = self.model.get_params()
+        self.model.set_params(flat_params + alpha * d)
+        
+        return alpha
+    
+    
+    # --- Step cho optimizer ---
+    def step(self, model):
+        self.update()
+
+            
     
 class Momentum(Optimzer):
     

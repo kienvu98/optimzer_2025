@@ -103,3 +103,43 @@ class CrossEntropy(Loss):
             
         return grad / batch_size
     
+    
+    
+class LossWrapper:
+    '''
+    Wrapper cho los hiện tại, cho phép set batch và tựu tính forward/backward
+    '''
+    
+    def __init__(self, loss, model):
+        self.loss = loss
+        self.model = model
+        self.predicts = None
+        self.inputs = None
+        self.targets = None
+        self.predicts = None
+        
+    def set_batch(self, inputs, targets):
+        self.input = inputs
+        self.targets = targets
+        self.predicts = self.model.forward(inputs)
+        return self.predicts
+        
+    
+    def forward(self):
+        '''
+        tính loss tự động từ loss gốc
+        '''
+        return self.loss.forward(self.predicts, self.targets)
+    
+    
+    def backward(self):
+        '''
+        tính đạo hàm của loss
+        '''
+        return self.loss.backward()
+    
+    
+    def __call__(self):
+        return self.forward()
+   
+

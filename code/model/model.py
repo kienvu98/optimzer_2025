@@ -74,8 +74,9 @@ class Dense(Layer):
         return grad_input
     
     def step(self):
-        self.W = self.optimzer.update(self.W, self.dW, self.grad_W)
-        self.b = self.optimzer.update(self.b, self.db, self.grad_b)
+     #   self.W = self.optimzer.update(self.W, self.dW, self.grad_W)
+     #   self.b = self.optimzer.update(self.b, self.db, self.grad_b)
+        pass
         
     
     def state_dict(self):
@@ -109,6 +110,25 @@ class Dense(Layer):
         hàm tính tổng số trọng số qua lớp Dense
         '''
         return self.W.size + self.b.size
+    
+    
+    def get_params(self):
+        '''
+        trả về danh sách tham số
+        '''
+        return [self.W, self.b]
+    
+    
+    def get_grads(self):
+        '''
+        trả về danh sách gradient tương ứng
+        '''
+        return [self.dW, self.db]
+    
+    
+    def set_params(self, params):
+        """Nhận list params và gán lại cho layer"""
+        self.W, self.b = params
    
    
    
