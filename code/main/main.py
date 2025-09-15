@@ -3,12 +3,12 @@ from optimzer_project.code.model.sequential import Model
 from optimzer_project.code.model.model import Dense
 from optimzer_project.code.model.model import Relu
 from optimzer_project.code.model.model import Sigmoid
-from optimzer_project.code.optimzer.optimzer import Momentum, GD, GD_LineSearch, Adam, SGD
+from optimzer_project.code.optimzer.optimzer import Momentum, GD, Adam, LineSearch
 from optimzer_project.code.backend.backend import is_gpu_enable
 from optimzer_project.code.backend.utils import split_arrays, sigmoid_to_label, accuracy_score, plot_metrics_optmzer
 from optimzer_project.code.backend.backend import xp as np
 from optimzer_project.code.backend.data_loader import DataLoader
-from optimzer_project.code.loss.loss import BinaryCrossEntropy
+from optimzer_project.code.loss.loss import BinaryCrossEntropy, LossWrapper
 from optimzer_project.code.model.trainer import Trainer
 import time
 import json
@@ -35,15 +35,16 @@ def main(file_name_X, file_name_y, folder):
     
     
     # khởi tạo loss 
-    loss = BinaryCrossEntropy()
+   
 
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     #list_lr = [0.2]#, 0.3]
-    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
+    #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
+    list_lr = [1.0]
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
-        "GD": GD()
+        #"GD": GD()
         #"SGD": SGD(),
         #"Momentum": Momentum(),
         #"GD_LineSearch": GD_LineSearch(
@@ -53,13 +54,16 @@ def main(file_name_X, file_name_y, folder):
         #  loss_fn=lambda model: loss(model.forward(X_train), y_train),
         #  model=None # sẽ gắn sau
         #)
+        "lineSearch": LineSearch(model=None, loss_fn=None,
+                                 direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+                                 max_iter=50, reuse_lr=True, cg_tol=1e-4)
     }
     for name, optimizer in optimizers.items():
         dict_lr = {}
         dict_time_loss = {}
         for lr in list_lr :
             # tạo DataLoader
-            if name == "GD" or name == "GD_LineSearch": 
+            if name == "GD" or name == "lineSearch": 
                 batch_size = 40000
             else:
                 batch_size = 4096
@@ -77,17 +81,21 @@ def main(file_name_X, file_name_y, folder):
             ])
             
             model.summary()
+            loss = BinaryCrossEntropy()
+            loss_warpper = LossWrapper(loss, model)
 
             # Gán model vào optimizer nếu cần (cho GD_Backtracking)
             if hasattr(optimizer, 'model') and optimizer.model is None:
+                optimizer.loss_fn = loss_warpper
                 optimizer.model = model
 
             # Khởi tạo trainer
             trainer = Trainer(
                 model=model,
                 train_loader=train_loader,
+                optimzer=optimizer,
                 val_loader=val_loader,
-                loss=loss,
+                loss=loss_warpper,
                 predict_fn=sigmoid_to_label,
                 accuracy_fn=accuracy_score,
                 epochs=2000
@@ -95,7 +103,7 @@ def main(file_name_X, file_name_y, folder):
 
             # Huấn luyện
             start_time = time.time()
-            trainer.fit(min_delta=1e-4)
+            trainer.fit_line_search()
             
             time_train = time.time() - start_time
             dict_time_loss.setdefault(lr, {})['time'] = time_train
