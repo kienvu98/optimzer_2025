@@ -1,5 +1,5 @@
-from optimzer_project.code.backend.backend import xp as np, is_gpu_enable, _cupy_cg, _cupy_linearOperator
-from scipy.sparse.linalg import LinearOperator, cg
+from optimzer_project.code.backend.backend import xp as np, is_gpu_enable, _cg, _linearOperator
+#from scipy.sparse.linalg import LinearOperator, cg
 
 from abc import ABC, abstractmethod
 
@@ -60,7 +60,7 @@ class LineSearch(Optimzer):
             newton -> dk = -Hessian_k ^ -1 * gradient()f(x_k)
     '''
     
-    def __init__(self, model, loss_fn, direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, max_iter=50, reuse_lr=True, cg_tol=1e-4):
+    def __init__(self, model, loss_fn, direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, max_iter=50, reuse_lr=True, cg_tol=1e-4, cg_maxiter=50):
         super().__init__(lr)
         self.model = model
         self.loss_fn = loss_fn
@@ -73,6 +73,7 @@ class LineSearch(Optimzer):
         self.reuse_lr = reuse_lr # cờ để thuật toán đánh dấu mỗi vòng lặp dùng lr config đầu hay dùng lr tối ưu vòng lặp trước
         self.last_alpha = lr
         self.cg_tol = cg_tol
+        self.cg_maxiter = cg_maxiter
         
         
     # --- Gauss-Newton Hv product ---
@@ -91,7 +92,7 @@ class LineSearch(Optimzer):
         self.loss_fn.predicts = y_pred + Jv
         grad_out = self.loss_fn.backward()
         self.model.backward(grad_out)
-        Hv = self.model.get_grads()
+        Hv = self.model.get_grads().copy().ravel()
 
         # Reset state
         self.model.set_params(flat_params)
@@ -106,12 +107,12 @@ class LineSearch(Optimzer):
         elif self.direction == "newton":
             Hv_func = lambda v: self.gauss_newton_hv(v)
 
-            if not is_gpu_enable:
-                lin_op = LinearOperator((grad.size, grad.size), matvec=Hv_func)
-                d, _ = cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
-            else:
-                lin_op = _cupy_linearOperator((grad.size, grad.size), matvec=Hv_func)
-                d, _ = _cupy_cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
+            #if not is_gpu_enable:
+            lin_op = _linearOperator((grad.size, grad.size), matvec=Hv_func)
+            d, _ = _cg(lin_op, -grad, atol=self.cg_tol, maxiter=self.cg_maxiter)
+            #else:
+            #    lin_op = _cupy_linearOperator((grad.size, grad.size), matvec=Hv_func)
+            #    d, _ = _cupy_cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
 
             return d
         else:
@@ -265,4 +266,82 @@ class Adam(Optimzer):
     
 
 
+class Newton(Optimzer):
+    '''
+    class triển khai thuật toán newton
+    Ct triển khai thuật toán
+    x_k+1 = x_k + d
+    trong đó d: hướng của đạo hàm
+        d = -H^-1 * gradient(x_k) --> công thức newton chuẩn nhưng tính toán rất tốn chi phí và chưa chính xác vì tính toán H^-1
+        sử dụng Hessian-Vector Product (Hv product) để xấp xỉ ma trận H^-1
+    '''
+
+    def __init__(self, model, loss_fn, lr=0.1, cg_tol=1e-4, cg_maxiter=None, damping=0.05):
+        super().__init__(lr)
+        self.cg_tol = cg_tol
+        self.cg_maxiter = cg_maxiter
+        self.model = model
+        self.loss_fn = loss_fn
+        self.damping = damping
+
+    def gauss_newton_hv(self, v, eps=1e-3):
+        flat_params = self.model.get_params()
+        y_pred = self.loss_fn.predicts.copy()
+        target = self.loss_fn.targets
+
+        # Perturbation để lấy Jv
+        self.model.set_params(flat_params + eps * v)
+        y_perturbed = self.model.forward(self.loss_fn.input)
+        Jv = (y_perturbed - y_pred) / eps
+
+        # Backprop qua loss với predicts bị perturb
+        self.loss_fn.predicts = y_pred + Jv
+        grad_out = self.loss_fn.backward()
+        self.model.backward(grad_out)
+        Hv = self.model.get_grads().copy().ravel()
+
+        # Reset state
+        self.model.set_params(flat_params)
+        self.loss_fn.predicts = y_pred
+        self.loss_fn.targets = target
+        return Hv
     
+
+    # --- Cập nhật tham số ---
+    def update(self, params, grad):
+        grad = grad.ravel()
+
+        def Hv_func(v):
+            return self.gauss_newton_hv(v)
+
+        # dùng thu viện tính d hướng đạo hàm
+        #lin_op = LinearOperator((grads.size, grads.size), matvec=Hv_func)
+        #d, info = cg(lin_op, -grads, tol=self.cg_tol, maxiter=self.cg_maxiter)
+
+        #if not is_gpu_enable:
+        lin_op = _linearOperator((grad.size, grad.size), matvec=Hv_func)
+        d, info = _cg(lin_op, -grad, atol=self.cg_tol, maxiter=self.cg_maxiter)
+        #else:
+        #    lin_op = _cupy_linearOperator((grad.size, grad.size), matvec=Hv_func)
+        #    d, info = _cupy_cg(lin_op, -grad, tol=self.cg_tol, maxiter=self.cg_maxiter)
+
+        if info != 0:
+            print(f"CG not converged, info={info}")
+
+        return params + self.lr * self.damping * d
+    
+
+    def step(self, model):
+
+        # Forward & Backward để có gradient
+        self.loss_fn.predicts = self.model.forward(self.loss_fn.input)
+        grad_out = self.loss_fn.backward()
+        self.model.backward(grad_out)
+
+        # Lấy params và grads (flatten vector)
+        params = self.model.get_params()
+        grads = self.model.get_grads()
+
+        # Update params theo Newton step
+        new_params = self.update(params, grads)
+        model.set_params(new_params)
