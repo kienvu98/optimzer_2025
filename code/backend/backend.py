@@ -1,21 +1,23 @@
 import numpy as _numpy
+from scipy.sparse.linalg import LinearOperator as _scipy_linearOperator
+from scipy.sparse.linalg import cg as _scipy_cg
 
 # kiểm tra xem máy có cudd_gpu hay không
 try:
     import cupy as _cupy
-    from cupyx.scipy.sparse.linalg import cg as _cg
-    from cupyx.scipy.sparse.linalg import LinearOperator as _linearOperator
+    from cupyx.scipy.sparse.linalg import cg as _cupy_cg
+    from cupyx.scipy.sparse.linalg import LinearOperator as _cupy_linearOperator
     _gpu_available = _cupy.cuda.runtime.getDeviceCount() > 0
 except:
     _cupy = None
     _gpu_available = False
-    _cg = None
-    _linearOperator = None
+    _cupy_cg = None
+    _cupy_linearOperator = None
     
 # mạc định là GPU nếu có không thì dùng cpu
 xp = _cupy if _gpu_available else _numpy
-_cupy_cg = _cg
-_cupy_linearOperator = _linearOperator
+_cg = _cupy_cg if _gpu_available else _scipy_cg
+_linearOperator = _cupy_linearOperator if _gpu_available else _scipy_linearOperator
 
 def set_backend(use_gpu: bool = False, verbose: bool = True):
     '''
