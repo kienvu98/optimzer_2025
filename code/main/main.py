@@ -3,7 +3,7 @@ from optimzer_project.code.model.sequential import Model
 from optimzer_project.code.model.model import Dense
 from optimzer_project.code.model.model import Relu
 from optimzer_project.code.model.model import Sigmoid
-from optimzer_project.code.optimzer.optimzer import Momentum, GD, Adam, LineSearch, Newton
+from optimzer_project.code.optimzer.optimzer import Momentum, GD, Adam, LineSearch, QuasiNewton
 from optimzer_project.code.backend.backend import is_gpu_enable
 from optimzer_project.code.backend.utils import split_arrays, sigmoid_to_label, accuracy_score, plot_metrics_optmzer
 from optimzer_project.code.backend.backend import xp as np
@@ -38,9 +38,13 @@ def main(file_name_X, file_name_y, folder):
    
 
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-    #list_lr = [0.2]#, 0.3]
+    list_lr = [1]#, 0.3]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
+<<<<<<< HEAD
     list_lr = [0.2, 0.4, 0.6, 0.8, 1]
+=======
+    #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
+>>>>>>> 50c01eeb3024b8bd0c58f910b94be0b83b582bad
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
@@ -55,16 +59,17 @@ def main(file_name_X, file_name_y, folder):
         #  model=None # sẽ gắn sau
         #)
         "lineSearch": LineSearch(model=None, loss_fn=None,
-                                direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
-                                max_iter=50, reuse_lr=True, cg_tol=1e-4, cg_maxiter=50)
+                                direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+                                max_iter=50, reuse_lr=False)
         #"new_ton": Newton(model=None, loss_fn=None, lr=0.1, cg_tol=1e-4, cg_maxiter=50)
+        #"newton": QuasiNewton(model=None, loss_fn=None)
     }
     for name, optimizer in optimizers.items():
         dict_lr = {}
         dict_time_loss = {}
         for lr in list_lr :
             # tạo DataLoader
-            if name == "GD" or name == "lineSearch" or name == "new_ton": 
+            if name == "GD" or name == "lineSearch" or name == "newton": 
                 batch_size = 40000
             else:
                 batch_size = 4096
@@ -90,6 +95,9 @@ def main(file_name_X, file_name_y, folder):
             if hasattr(optimizer, 'model'):
                 optimizer.loss_fn = loss_warpper
                 optimizer.model = model
+                optimizer.prev_params = None
+                optimizer.prev_grad = None
+                optimizer.B = None
 
             # Khởi tạo trainer
             trainer = Trainer(
@@ -100,12 +108,13 @@ def main(file_name_X, file_name_y, folder):
                 loss=loss_warpper,
                 predict_fn=sigmoid_to_label,
                 accuracy_fn=accuracy_score,
-                epochs=2000
+                epochs=200
             )
 
             # Huấn luyện
             start_time = time.time()
             trainer.fit_line_search()
+            
             
             time_train = time.time() - start_time
             dict_time_loss.setdefault(lr, {})['time'] = time_train

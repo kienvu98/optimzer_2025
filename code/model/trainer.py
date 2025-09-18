@@ -185,20 +185,20 @@ class Trainer:
 
             # --- Early stopping ---
             if epoch > start_epoch:
-                if abs(best_val_loss - train_loss) > min_delta:
+                if best_val_loss - train_loss > min_delta:
                     best_val_loss = train_loss
                     wait = 0
                 else:
                     wait += 1
-                    print(f"⚠️ Train loss không cải thiện ({wait}/{patience})")
+                    print(f"Train loss không cải thiện ({wait}/{patience})")
 
                 # Kiểm tra gradient norm (model cần có get_total_grad_norm)
                 grad_norm = self.model.get_total_grad_norm()
                 if grad_norm < grad_threshold:
-                    print(f"⏹️ Dừng sớm tại epoch {epoch+1} do gradient quá nhỏ: {grad_norm:.2e}")
+                    print(f"Dừng sớm tại epoch {epoch+1} do gradient quá nhỏ: {grad_norm:.2e}")
                     break
 
                 if wait >= patience:
-                    print(f"⏹️ Dừng sớm tại epoch {epoch+1} do train loss không cải thiện sau {patience} epoch.")
+                    print(f"Dừng sớm tại epoch {epoch+1} do train loss không cải thiện sau {patience} epoch.")
                     break
         
