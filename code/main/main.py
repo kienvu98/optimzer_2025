@@ -40,11 +40,8 @@ def main(file_name_X, file_name_y, folder):
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     list_lr = [1]#, 0.3]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
-<<<<<<< HEAD
     list_lr = [0.2, 0.4, 0.6, 0.8, 1]
-=======
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
->>>>>>> 50c01eeb3024b8bd0c58f910b94be0b83b582bad
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
