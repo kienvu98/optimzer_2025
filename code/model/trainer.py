@@ -88,7 +88,7 @@ class Trainer:
         return avg_loss, acc
     
     
-    def fit(self, patience=10, min_delta=1e-3, grad_threshold=1e-3, start_epoch=20):
+    def fit(self, patience=10, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
         '''
         hàm gọi để thực hiện trainning model
         - patience: số epoch cho phép không cải thiện
@@ -146,7 +146,7 @@ class Trainer:
             
             
             
-    def fit_line_search(self, patience=10, min_delta=1e-3, grad_threshold=1e-3, start_epoch=20):
+    def fit_line_search(self, patience=5, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
         """
         Train loop với optimizer LineSearch
         - patience: số epoch cho phép không cải thiện
@@ -181,6 +181,7 @@ class Trainer:
             self.val_loss_list.append(val_loss)
             self.train_acc_list.append(train_acc)
             self.val_acc_list.append(val_acc)
+            self.epoch_num += 1
 
             # --- Early stopping ---
             if epoch > start_epoch:
