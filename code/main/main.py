@@ -37,15 +37,15 @@ def main(file_name_X, file_name_y, folder):
     # khởi tạo loss 
    
 
-    #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-    list_lr = [1]#, 0.3]
+    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.01]
+    #list_lr = [1, 0.5, 0.1]#, 0.3]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
-    list_lr = [0.2, 0.4, 0.6, 0.8, 1]
+    #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
-        #"GD": GD()
+        "GD": GD()
         #"SGD": SGD(),
         #"Momentum": Momentum(),
         #"GD_LineSearch": GD_LineSearch(
@@ -55,9 +55,9 @@ def main(file_name_X, file_name_y, folder):
         #  loss_fn=lambda model: loss(model.forward(X_train), y_train),
         #  model=None # sẽ gắn sau
         #)
-        "lineSearch": LineSearch(model=None, loss_fn=None,
-                                direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
-                                max_iter=50, reuse_lr=False)
+        #"lineSearch": LineSearch(model=None, loss_fn=None,
+        #                        direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+        #                       max_iter=50, reuse_lr=False)
         #"new_ton": Newton(model=None, loss_fn=None, lr=0.1, cg_tol=1e-4, cg_maxiter=50)
         #"newton": QuasiNewton(model=None, loss_fn=None)
     }
@@ -105,7 +105,7 @@ def main(file_name_X, file_name_y, folder):
                 loss=loss_warpper,
                 predict_fn=sigmoid_to_label,
                 accuracy_fn=accuracy_score,
-                epochs=200
+                epochs=2500
             )
 
             # Huấn luyện
