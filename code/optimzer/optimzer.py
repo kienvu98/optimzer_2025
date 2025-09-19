@@ -43,7 +43,7 @@ class GD(Optimzer):
     
     
     def step(self, model):
-        for param, grad, key in model.get_grads:
+        for param, grad, key in model.get_grads():
             if grad is not None:
                 param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
             
