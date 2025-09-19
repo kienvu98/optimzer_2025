@@ -110,6 +110,7 @@ class Model:
     
     def get_params(self):
         '''
+        get_params để line search
         duỗi các tham số để phục vụ line search
         '''
         flat_params = []
@@ -141,6 +142,7 @@ class Model:
     
     def get_grads(self):
         '''
+        get grads của line search
         Lấy gradient của toàn bộ model thành vector phẳng
         (sau khi đã backward)
         '''
@@ -151,3 +153,16 @@ class Model:
             if hasattr(layer, 'db') and layer.db is not None:
                 flat_grads.append(layer.db.flatten())
         return np.concatenate(flat_grads)
+    
+    
+    def get_params_not_line_search(self):
+        '''
+        get_params để line search
+        duỗi các tham số để phục vụ line search
+        '''
+        flat_params = []
+        for layer in self.layers:
+            if hasattr(layer, "get_params"):
+                for p in layer.get_params():
+                    flat_params.append(p.flatten())
+        return np.concatenate(flat_params)

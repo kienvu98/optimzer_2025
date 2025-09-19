@@ -37,14 +37,15 @@ def main(file_name_X, file_name_y, folder):
     # khởi tạo loss 
    
 
-    #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-    list_lr = [1]#, 0.3]
+    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.01]
+    #list_lr = [1, 0.5, 0.1]#, 0.3]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
+    #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     # danh sách các thuật toán tối ưu
     optimizers = {
         #"Adam": Adam(),
-        #"GD": GD()
+        "GD": GD()
         #"SGD": SGD(),
         #"Momentum": Momentum(),
         #"GD_LineSearch": GD_LineSearch(
@@ -54,9 +55,9 @@ def main(file_name_X, file_name_y, folder):
         #  loss_fn=lambda model: loss(model.forward(X_train), y_train),
         #  model=None # sẽ gắn sau
         #)
-        "lineSearch": LineSearch(model=None, loss_fn=None,
-                                direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
-                               max_iter=50, reuse_lr=False)
+        #"lineSearch": LineSearch(model=None, loss_fn=None,
+        #                        direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+        #                       max_iter=50, reuse_lr=False)
         #"new_ton": Newton(model=None, loss_fn=None, lr=0.1, cg_tol=1e-4, cg_maxiter=50)
         #"newton": QuasiNewton(model=None, loss_fn=None)
     }
@@ -87,6 +88,7 @@ def main(file_name_X, file_name_y, folder):
             loss_warpper = LossWrapper(loss, model)
 
             # Gán model vào optimizer nếu cần (cho GD_Backtracking)
+            #if hasattr(optimizer, 'model') and optimizer.model is None:
             if hasattr(optimizer, 'model'):
                 optimizer.loss_fn = loss_warpper
                 optimizer.model = model
@@ -103,7 +105,7 @@ def main(file_name_X, file_name_y, folder):
                 loss=loss_warpper,
                 predict_fn=sigmoid_to_label,
                 accuracy_fn=accuracy_score,
-                epochs=200
+                epochs=2500
             )
 
             # Huấn luyện
@@ -137,11 +139,12 @@ if __name__ == "__main__":
         print('project run with gpu')
     else:
         print('project run with cpu')
-    #X_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_X.npy'
-    #y_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_y.npy'
-    file_path = r'C:\Users\Vu Trung Kien\Desktop\optimzer\optimzer_project\code\folder_image_file_train'
-    X_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_X.npy'
-    y_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_y.npy'
+    X_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_X.npy'
+    y_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_y.npy'
+    file_path = '/workspace/optimzer_project/code/folder_image_file_train'
+    #file_path = r'C:\Users\Vu Trung Kien\Desktop\optimzer\optimzer_project\code\folder_image_file_train'
+    #X_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_X.npy'
+    #y_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_y.npy'
     main(X_file, y_file, file_path)
     #X = np.array(np.load(X_file))
     #y= np.array(np.load(y_file))
