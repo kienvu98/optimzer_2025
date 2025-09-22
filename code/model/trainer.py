@@ -6,7 +6,7 @@ class Trainer:
     '''
     class triển khai training
     '''
-    def __init__(self, model, optimzer, train_loader, val_loader, loss, predict_fn, accuracy_fn, epochs=10):
+    def __init__(self, model, optimzer, train_loader, val_loader, loss, predict_fn, accuracy_fn, epochs=10, flag_epoch=True):
         self.model = model
         self.optimzer = optimzer
         self.train_loader = train_loader
@@ -15,6 +15,7 @@ class Trainer:
         self.predict_fn = predict_fn
         self.accuracy_fn = accuracy_fn
         self.epochs = epochs
+        self.flag_epoch = flag_epoch
         
     
     def train_epoch(self):
@@ -33,7 +34,7 @@ class Trainer:
             #out_put = self.model.forward(x_batch)
             
             # tính loss 
-            loss_value = self.loss()
+            loss_value = self.loss() 
             total_loss += loss_value * y_batch.shape[0]
             total_samples += y_batch.shape[0]
             
@@ -47,6 +48,11 @@ class Trainer:
             self.model.backward(grad)
             # cập nhập lại trọng số
             self.optimzer.step(self.model)
+            
+            if not self.flag_epoch:
+                acc = self.accuracy_fn(y_batch, predicts)
+                return loss_value, acc
+            
         
         avg_loss = total_loss / total_samples
         y_true = np.concatenate(all_targets)
@@ -88,7 +94,7 @@ class Trainer:
         return avg_loss, acc
     
     
-    def fit(self, patience=10, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
+    def fit(self, patience=20, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
         '''
         hàm gọi để thực hiện trainning model
         - patience: số epoch cho phép không cải thiện
@@ -201,4 +207,54 @@ class Trainer:
                 if wait >= patience:
                     print(f"Dừng sớm tại epoch {epoch+1} do train loss không cải thiện sau {patience} epoch.")
                     break
+    
+    
+    def fit_iterator(self, patience=30, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
+        """
+        Train loop với sgd
+        - patience: số epoch cho phép không cải thiện
+        - min_delta: mức cải thiện tối thiểu để tính là cải thiện
+        - grad_threshold: dừng sớm nếu chuẩn gradient quá nhỏ
+        """
+        self.train_loss_list = []
+        self.val_loss_list = []
+        self.train_acc_list = []
+        self.val_acc_list = []
+        self.epoch_num = 0
+
+        best_val_loss = float('inf')
+        wait = 0
+
+        for epoch in range(self.epochs):
+            print(f"\n📘 Epoch {epoch+1}/{self.epochs}")
+            start_time = time.time()
+
+            # --- Train ---
+            train_loss, train_acc = self.train_epoch()
+
+            # --- Validation ---
+            val_loss, val_acc = self.validate()
+
+            elapsed = time.time() - start_time
+            print(f"📊 Train Loss: {train_loss:.4f} | Train Acc: {train_acc:.4f} | "
+                f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f} | ⏱️ Time: {elapsed:.2f}s")
         
+            # Lưu lại history
+            self.train_loss_list.append(train_loss)
+            self.val_loss_list.append(val_loss)
+            self.train_acc_list.append(train_acc)
+            self.val_acc_list.append(val_acc)
+            self.epoch_num += 1
+
+            if epoch >= start_epoch:
+                if val_loss + min_delta < best_val_loss:
+                    best_val_loss = val_loss
+                    wait = 0
+                    print(f"✅ Cải thiện val_loss: {best_val_loss:.4f}")
+                else:
+                    wait += 1
+                    print(f"⚠️ Val loss không cải thiện ({wait}/{patience})")
+
+                if wait >= patience:
+                    print(f"⏹️ Dừng sớm tại epoch {epoch+1} do val loss không cải thiện sau {patience} epoch.")
+                    break
