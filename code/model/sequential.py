@@ -157,27 +157,25 @@ class Model:
     
     def get_params_not_line_search(self):
         '''
-        get_params để phục vụ các thuật toán tối ưu
-        đưa các tầng vào từng phần tử trong list
+        get_params không dùng các thuật toán line seach
         '''
-        params = []
+        params = {}
         for layer in self.layers:
-            if hasattr(layer, 'get_params'):
-                #for param in layer.get_params():
-                #    params.append((param, layer.name))
-                params.append((layer.get_params()[0], layer.grad_W))
-                params.append((layer.get_params()[1], layer.grad_b))
+           if hasattr(layer, 'get_params'):
+               list_params = layer.get_params()
+               params[layer.grad_W] = list_params[0]
+               params[layer.grad_b] = list_params[1]
         return params
     
-
+    
     def get_grads_not_line_search(self):
         '''
-        get_grads để phục vụ các thuật toán tối ưu
+        get_grads không dùng các thuật toán line seach
         '''
-        grads = []
+        grads = {}
         for layer in self.layers:
-            if hasattr(layer, 'get_grads'):
-                for grad in layer.get_grads():
-                    grads.append((grad, layer.name))
+           if hasattr(layer, 'get_grads'):
+                list_grads = layer.get_grads()
+                grads[layer.grad_W] = list_grads[0]
+                grads[layer.grad_b] = list_grads[1]
         return grads
-        

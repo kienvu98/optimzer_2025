@@ -39,6 +39,8 @@ def main(file_name_X, file_name_y, folder):
 
     #list_lr = [0.5, 0.2, 0.3, 0.4, 0.5, 0.01]
     list_lr = [0.01]#, 0.3]
+    list_lr = [0.01, 0.03, 0.05, 0.07, 0.09, 0.1, 0.2]
+    #list_lr = [1, 0.7, 0.5, 0.3, 0.1]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
@@ -56,10 +58,13 @@ def main(file_name_X, file_name_y, folder):
         #  model=None # sẽ gắn sau
         #)
         #"lineSearch": LineSearch(model=None, loss_fn=None,
-        #                        direction="newton", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+        #                        direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
         #                       max_iter=50, reuse_lr=False)
         #"new_ton": Newton(model=None, loss_fn=None, lr=0.1, cg_tol=1e-4, cg_maxiter=50)
         #"newton": QuasiNewton(model=None, loss_fn=None)
+        #"lineSearch_SGD": LineSearch(model=None, loss_fn=None,
+        #                        direction="gd", lr=1, rho=0.5, c=1e-4, min_alpha=1e-8, 
+        #                        max_iter=50, reuse_lr=False)
     }
     for name, optimizer in optimizers.items():
         dict_lr = {}
@@ -69,7 +74,7 @@ def main(file_name_X, file_name_y, folder):
             if name == "GD" or name == "lineSearch" or name == "newton": 
                 batch_size = 40000
             else:
-                batch_size = 4096
+                batch_size = 64
                 
             train_loader = DataLoader.from_arrays(X_train, y_train, batch_size=batch_size)
             val_loader = DataLoader.from_arrays(X_test, y_test, batch_size=batch_size, shuffle=False)
@@ -105,12 +110,14 @@ def main(file_name_X, file_name_y, folder):
                 loss=loss_warpper,
                 predict_fn=sigmoid_to_label,
                 accuracy_fn=accuracy_score,
-                epochs=2500
+                epochs=2500,
+                flag_epoch=False
             )
 
             # Huấn luyện
             start_time = time.time()
-            trainer.fit_line_search()
+            #trainer.fit_line_search()
+            trainer.fit_iterator()
             
             
             time_train = time.time() - start_time

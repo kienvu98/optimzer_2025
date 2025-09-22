@@ -43,11 +43,9 @@ class GD(Optimzer):
     
     
     def step(self, model):
-        self.model = model
         params = model.get_params_not_line_search()
         grads = model.get_grads_not_line_search()
-
-        for (param, key), (grad, _) in zip(params, grads):
+        for (key, param), (_, grad) in zip(params.items(), grads.items()):
             if grad is not None:
                 print(f"{key} grad norm: {np.linalg.norm(grad)}")
                 param[...] = self.update(param, grad, None) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
@@ -210,20 +208,16 @@ class Momentum(Optimzer):
         
         # cập nhập tham số
         return param + self.velocity[key]
+     
     
-
     def step(self, model):
         self.model = model
         params = model.get_params_not_line_search()
         grads = model.get_grads_not_line_search()
-
-        for (param, key), (grad, _) in zip(params, grads):
+        for (key, param), (_, grad) in zip(params.items(), grads.items()):
             if grad is not None:
-                #print(f"{key} grad norm: {np.linalg.norm(grad)}")
                 param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
-            
-            
-        
+    
     
     
 class Adam(Optimzer):
@@ -282,12 +276,9 @@ class Adam(Optimzer):
         self.model = model
         params = model.get_params_not_line_search()
         grads = model.get_grads_not_line_search()
-
-        for (param, key), (grad, _) in zip(params, grads):
+        for (key, param), (_, grad) in zip(params.items(), grads.items()):
             if grad is not None:
-                #print(f"{key} grad norm: {np.linalg.norm(grad)}")
                 param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
-            
     
 
 """"
