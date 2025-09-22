@@ -35,17 +35,22 @@ class GD(Optimzer):
     class triển khai thuật toán gradient descent
     '''
     
-    # def __init__(self, model lr=0.01):
-    #     super().__init__(lr)
+    #def __init__(self, model lr=0.01):
+    #    super().__init__(lr)
         
     def update(self, param, grad, key=None):
         return param - self.lr * grad
     
     
     def step(self, model):
-        for param, grad, key in model.get_grads():
+        self.model = model
+        params = model.get_params_not_line_search()
+        grads = model.get_grads_not_line_search()
+
+        for (param, key), (grad, _) in zip(params, grads):
             if grad is not None:
-                param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
+                print(f"{key} grad norm: {np.linalg.norm(grad)}")
+                param[...] = self.update(param, grad, None) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
             
             
 
@@ -77,7 +82,6 @@ class LineSearch(Optimzer):
         self.prev_params = None
         self.prev_grad = None
         
-    
         
     def get_direction(self, grad, params):
         if self.direction == "gd":
@@ -207,6 +211,19 @@ class Momentum(Optimzer):
         # cập nhập tham số
         return param + self.velocity[key]
     
+
+    def step(self, model):
+        self.model = model
+        params = model.get_params_not_line_search()
+        grads = model.get_grads_not_line_search()
+
+        for (param, key), (grad, _) in zip(params, grads):
+            if grad is not None:
+                #print(f"{key} grad norm: {np.linalg.norm(grad)}")
+                param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
+            
+            
+        
     
     
 class Adam(Optimzer):
@@ -259,6 +276,18 @@ class Adam(Optimzer):
         
         # cập nhập tham số
         return param - self.lr * (m_hat /(np.sqrt(v_hat) + self.epsilon))
+    
+    
+    def step(self, model):
+        self.model = model
+        params = model.get_params_not_line_search()
+        grads = model.get_grads_not_line_search()
+
+        for (param, key), (grad, _) in zip(params, grads):
+            if grad is not None:
+                #print(f"{key} grad norm: {np.linalg.norm(grad)}")
+                param[...] = self.update(param, grad, key) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
+            
     
 
 """"
