@@ -157,12 +157,27 @@ class Model:
     
     def get_params_not_line_search(self):
         '''
-        get_params để line search
-        duỗi các tham số để phục vụ line search
+        get_params để phục vụ các thuật toán tối ưu
+        đưa các tầng vào từng phần tử trong list
         '''
-        flat_params = []
+        params = []
         for layer in self.layers:
-            if hasattr(layer, "get_params"):
-                for p in layer.get_params():
-                    flat_params.append(p.flatten())
-        return np.concatenate(flat_params)
+            if hasattr(layer, 'get_params'):
+                #for param in layer.get_params():
+                #    params.append((param, layer.name))
+                params.append((layer.get_params()[0], layer.grad_W))
+                params.append((layer.get_params()[1], layer.grad_b))
+        return params
+    
+
+    def get_grads_not_line_search(self):
+        '''
+        get_grads để phục vụ các thuật toán tối ưu
+        '''
+        grads = []
+        for layer in self.layers:
+            if hasattr(layer, 'get_grads'):
+                for grad in layer.get_grads():
+                    grads.append((grad, layer.name))
+        return grads
+        

@@ -37,17 +37,17 @@ def main(file_name_X, file_name_y, folder):
     # khởi tạo loss 
    
 
-    list_lr = [0.1, 0.2, 0.3, 0.4, 0.5, 0.01]
-    #list_lr = [1, 0.5, 0.1]#, 0.3]
+    #list_lr = [0.5, 0.2, 0.3, 0.4, 0.5, 0.01]
+    list_lr = [0.01]#, 0.3]
     #list_lr = [0.1, 0.2, 0.3, 0.4, 0.5] #, 0.6, 0.7, 0.8]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     #list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
     # danh sách các thuật toán tối ưu
     optimizers = {
-        #"Adam": Adam(),
-        "GD": GD()
+        "Adam": Adam(),
+        #"GD": GD()
         #"SGD": SGD(),
-        #"Momentum": Momentum(),
+        #"Momentum": Momentum()
         #"GD_LineSearch": GD_LineSearch(
         #   lr=1.0,
         #  rho=0.5,
@@ -77,8 +77,8 @@ def main(file_name_X, file_name_y, folder):
             
             # Khởi tạo model mới cho mỗi optimizer
             model = Model([
-                # Dense(768, 256, optimizer, name='Dense_1'),
-                # Relu('Relu_1'),
+                #Dense(768, 256, optimizer, name='Dense_1'),
+                #Relu('Relu_1'),
                 Dense(768, 1, optimizer, name='Dense_1'),
                 Sigmoid('Sigmoid_1')
             ])
@@ -139,12 +139,12 @@ if __name__ == "__main__":
         print('project run with gpu')
     else:
         print('project run with cpu')
-    X_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_X.npy'
-    y_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_y.npy'
-    file_path = '/workspace/optimzer_project/code/folder_image_file_train'
-    #file_path = r'C:\Users\Vu Trung Kien\Desktop\optimzer\optimzer_project\code\folder_image_file_train'
-    #X_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_X.npy'
-    #y_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_y.npy'
+    #X_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_X.npy'
+    #y_file = '/workspace/data/data_optimzer_project_train/imdb_encoded_y.npy'
+    #file_path = '/workspace/optimzer_project/code/folder_image_file_train'
+    file_path = r'C:\Users\Vu Trung Kien\Desktop\optimzer\optimzer_project\code\folder_image_file_train'
+    X_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_X.npy'
+    y_file = r'C:\Users\Vu Trung Kien\Desktop\optimzer\data\imdb_encoded_y.npy'
     main(X_file, y_file, file_path)
     #X = np.array(np.load(X_file))
     #y= np.array(np.load(y_file))
