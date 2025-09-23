@@ -47,7 +47,7 @@ class GD(Optimzer):
         grads = model.get_grads_not_line_search()
         for (key, param), (_, grad) in zip(params.items(), grads.items()):
             if grad is not None:
-                print(f"{key} grad norm: {np.linalg.norm(grad)}")
+                #print(f"{key} grad norm: {np.linalg.norm(grad)}")
                 param[...] = self.update(param, grad, None) # param[...] giữ nguyên object nhưng thay đổi toàn bộ giá trị 
             
             
