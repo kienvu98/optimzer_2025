@@ -152,7 +152,7 @@ class Trainer:
             
             
             
-    def fit_line_search(self, patience=20, min_delta=1e-3, grad_threshold=1e-3, start_epoch=20):
+    def fit_line_search(self, patience=20, min_delta=1e-3, grad_threshold=1e-4, start_epoch=100):
         """
         Train loop với optimizer LineSearch
         - patience: số epoch cho phép không cải thiện
@@ -209,7 +209,7 @@ class Trainer:
                     break
     
     
-    def fit_iterator(self, patience=30, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
+    def fit_iterator(self, patience=50, min_delta=1e-4, grad_threshold=1e-3, start_epoch=20):
         """
         Train loop với sgd
         - patience: số epoch cho phép không cải thiện
