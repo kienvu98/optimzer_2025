@@ -16,11 +16,12 @@ class Logistic(nn.Module):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.dense = nn.Linear(self.input_dim, self.output_dim)
-        self.sigmoid = nn.Sigmoid()
+        #self.sigmoid = nn.Sigmoid()
     
     def forward(self, x):
         x = self.dense(x)
-        return self.sigmoid(x)
+        #return self.sigmoid(x)
+        return x
     
 def main(X_file, y_file):
 
@@ -42,10 +43,10 @@ def main(X_file, y_file):
     dataloader = DataLoader(dataset, batch_size=batch_size)
 
     # model
-    list_lr = [0.01, 0.02, 0.03, 0.04, 0.05]
+    list_lr = [0.6, 0.02, 0.03, 0.04, 0.05]
     for lr in list_lr:
         model = Logistic(768,1)
-        criterion = nn.BCELoss()
+        criterion = nn.BCEWithLogitsLoss()
         optimzer = optim.SGD(model.parameters(),lr=lr)
         
         for epoch in range(1000):
