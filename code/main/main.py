@@ -38,6 +38,9 @@ def main(file_name_X, file_name_y, folder):
    
 
     #list_lr = [0.5, 0.2, 0.3, 0.4, 0.5, 0.01]
+    list_lr = [0.1]#, 0.3]
+    #list_lr = [0.01, 0.03, 0.05, 0.07, 0.09, 0.1, 0.2]
+    #list_lr = [1, 0.7, 0.5, 0.3, 0.1]
     #list_lr = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
     #list_lr = [0.1, 0.3, 0.5, 0.07, 0.09, 0.1, 0.2]
     list_lr = [1.2, 1, 0.7]
@@ -82,8 +85,6 @@ def main(file_name_X, file_name_y, folder):
             
             # Khởi tạo model mới cho mỗi optimizer
             model = Model([
-                #Dense(768, 256, optimizer, name='Dense_1'),
-                #Relu('Relu_1'),
                 Dense(768, 1, optimizer, name='Dense_1'),
                 Sigmoid('Sigmoid_1')
             ])
