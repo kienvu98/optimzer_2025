@@ -48,9 +48,14 @@ class UtilComputing:
         out_H = (H + 2 * padding - kH) // stride + 1
         out_W = (W + 2 * padding - kW) // stride + 1
 
+        # đưa từng patch gradient về vị trí đúng trong dx_padded
         for i in range(kH):
             i_end = i + stride * out_H
             for j in range(kW):
                 j_end = j + stride * out_W
+                dx_padded[:, :, i:i_end:stride, j:j_end:stride] += cols_reshape[:, :, i, j, :, :]
                 
+        # cắt bỏ padding để cũng cỡ với data gốc
+        dx = dx_padded[:, :, padding:H + padding, padding:W + padding]
+        return dx
 
