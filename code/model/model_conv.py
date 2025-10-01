@@ -44,5 +44,19 @@ class Conv2D_Cpu(Layer):
     
     def backward(self, grad_out):
         return super().backward(grad_out)
+    
+    
+    def get_params(self):
+        '''
+        trả về danh sách tham số
+        '''
+        return [self.W, self.b]
+    
+    
+    def get_grads(self):
+        '''
+        trả về danh sách gradient tương ứng
+        '''
+        return [self.dW, self.db]
 
 
