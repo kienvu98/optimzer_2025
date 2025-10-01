@@ -1,6 +1,7 @@
 from optimzer_project.code.backend.backend import xp as np
 from optimzer_project.code.backend.backend import is_gpu_enable
 from optimzer_project.code.model.model import Layer
+from optimzer_project.code.backend.utils_computing import UtilComputing
 if is_gpu_enable():
     from cupy.cuda import cudnn
 
@@ -14,14 +15,14 @@ class Conv2D_Cpu(Layer):
         super().__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
-        self.kernel_size = kernel_size
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
         self.stride = stride
         self.padding = padding
 
         # trọng số của mô hình conv 2D
         scale = np.sqrt(2.0 / (self.in_channels * np.prod(self.kernel_size)))
         self.W = np.random.rand(out_channels, in_channels, *self.kernel_size) * scale
-        self.d = np.zeros(self.out_channels)
+        self.b = np.zeros(self.out_channels)
 
         # gradient
         self.dW = None
@@ -35,14 +36,44 @@ class Conv2D_Cpu(Layer):
 
 
 
-    def forward(self, inputs):
+    def forward(self, x):
         '''
         hàm triển khai forward của CNN
         '''
-        return super().forward(inputs)
+        self.x = x
+        N, C, H, W = x.shape
+
+        # tính im2cols duỗi data thành ma trận cỡ (N*out_H*out_W, C*kH*kW)
+        cols, out_H, out_W  = UtilComputing.im2col(x=x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
+
+        # duỗi trọng số thành vector để thực hiện phép nhân với cols --> chính là phép convulution
+        W_cols = self.W.reshape(self.out_channels, -1)
+
+        out = cols.dot(W_cols) + self.b
+
+        # reshape trả lại kích cỡ out_put của data khi qua lớp tích chập
+        out = out.reshape(N, out_H, out_W, self.out_channels).transpose(0, 3, 1, 2)
+
+        # lưu lại cache để phục vụ backward
+        self.cache = (x, cols, W_cols, out_H, out_W)
+        return out
     
     
     def backward(self, grad_out):
         return super().backward(grad_out)
+    
+
+    def get_params(self):
+        '''
+        trả về danh sách tham số
+        '''
+        return [self.W, self.b]
+    
+    
+    def get_grads(self):
+        '''
+        trả về danh sách gradient tương ứng
+        '''
+        return [self.dW, self.db]
 
 
