@@ -48,7 +48,7 @@ class Conv2D_Cpu(Layer):
         # duỗi trọng số thành vector để thực hiện phép nhân với cols --> chính là phép convulution
         W_col = self.W.reshape(self.out_channels, -1)
 
-        out = cols.dot(W_col) + self.b
+        out = cols.dot(W_col.T) + self.b
 
         # reshape trả lại kích cỡ out_put của data khi qua lớp tích chập
         out = out.reshape(N, out_H, out_W, self.out_channels).transpose(0, 3, 1, 2)
@@ -94,5 +94,145 @@ class Conv2D_Cpu(Layer):
         '''
         hàm tính tổng số trọng số qua lớp tích chập
         '''
-        return self.W.size  + self.b.size
+        return self.W.size + self.b.size
     
+    
+    
+class MaxPool2D_Cpu(Layer):
+    '''
+    class triển khai max pooling --> giảm kích cỡ ảnh lấy giá trị lớn nhất trong vị trí kernel trượt qua
+    '''
+    
+    def __init__(self, kernel_size, stride=2, padding=0, name=None):
+        super().__init__()
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.stride = stride
+        self.padding = padding
+        self.name = name or f"MaxPooling2D_{id(self)}"
+        self.cache = None
+        
+        
+    def forward(self, x):
+        '''
+        hàm triển khai forward cho max pooling 2D
+        '''
+        self.x = x
+        N, C, H, W = x.shape
+        kH, kW = self.kernel_size
+        
+        # sử dụng im2col biến data dạng imag thành cols theo kernel
+        cols, out_H, out_W = UtilComputing.im2col(x=x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
+        
+        # mỗi hàng của matrix col là 1 kernel --> chỉ cần lấy max trên mỗi hàng là được
+        # lấy chỉ số của phần tử lớn nhất trong hàng
+        self.argmax = np.argmax(cols, axis=1)
+        
+        # lọc phần tử max và thu nhỏ matrix
+        out = cols[np.arange(cols.shape[0]), self.argmax]
+        
+        # reshape lại kích cỡ đúng
+        out = out.reshape(N, out_H, out_W, C).transpose(0, 3, 1, 2)
+        self.cache = (cols, out_H, out_W)
+        return out
+    
+    
+    def backward(self, grad_out):
+        '''
+        hàm triển khai backward cho max poolng 2D
+        '''
+        
+        cols, out_H, out_W = self.cache
+        
+        # chuyển grad_out về thành vector 1 chiều
+        grad_out_flatten = grad_out.transpose(0, 2, 3, 1).ravel()
+        
+        # tạo ma trận cùng cỡ với cols
+        dcols = np.zeros_like(cols)
+        
+        # gán gradient vào các vị trí max 
+        dcols[np.arange(cols.shape[0]), self.argmax] = grad_out_flatten
+        
+        # biến về kích cỡ của ảnh của dx
+        dx = UtilComputing.col2im(x=self.x, cols=dcols, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
+        return dx
+    
+    
+    
+class AvgPool2D_Cpu(Layer):
+    '''
+    class triển khai average pooling 2D --> giảm chiều data lấy trung bình các giá trị mà kernek trượt qua
+    '''
+    
+    def __init__(self, kernel_size, stride=2, padding=0, name=None):
+        super().__init__()
+        self.kernel_size = kernel_size if isinstance(kernel_size, tuple) else (kernel_size, kernel_size)
+        self.stride = stride
+        self.padding = padding
+        self.name = name or f"AvgPooling2D_{id(self)}"
+        self.cache = None
+    
+    
+    def forward(self, x):
+        '''
+        hàm triển khai forward cho avg pooling
+        '''
+        self.x = x
+        N, C, H, W = x.shape
+        kH, kW = self.kernel_size
+        
+        # sử dụng im2col biến data dạng imag thành cols theo kernel
+        cols, out_H, out_W = UtilComputing.im2col(x=x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
+        
+        # mỗi hàng của matrix col là 1 kernel --> lấy trung bình trên từng hàng
+        out = np.mean(cols, axis=1)
+        
+        # reshape lại kích cỡ đúng
+        out = out.reshape(N, out_H, out_W, C).transpose(0, 3, 1, 2)
+        
+        self.cache = (out_H, out_W)
+        return out
+         
+         
+    def backward(self, grad_out):
+        '''
+        Hàm triển khai backward cho avg pooling
+        '''
+        out_H, out_W = self.cache
+        kH, kW = self.kernel_size
+        
+        # chuyển grad_out về thành vector 1 chiều
+        grad_out_flatten = grad_out.transpose(0, 2, 3, 1).ravel()
+        
+        # phân bổ đêu các giá trị về các patch trong kernel
+        dcols = np.repeat(grad_out_flatten[:, None], kH * kW,  axis=1) /  (kH * kW)
+        
+        # biến về kích cỡ của ảnh của dx
+        dx = UtilComputing.col2im(x=self.x, cols=dcols, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
+        return dx
+        
+        
+        
+class Flatten(Layer):
+    '''
+    class triển khai flatten duỗi dữ liệu nhiều chiều thành vector
+    '''
+    
+    def __init__(self, name=None):
+        super().__init__()
+        self.input_shape = None # để lưu chiều của để backward
+        self.name = name or f"Flatten_{id(self)}"
+        
+    
+    def forward(self, x):
+        '''
+        hàm triển khai forward
+        '''
+        self.input_shape = x.shape
+        return x.reshape(x.shape[0], -1)
+    
+    
+    def backward(self, grad_out):
+        '''
+        hàm triển khai backward
+        '''
+        return grad_out.reshape(self.input_shape) # đạo hàm trả lại chiều
