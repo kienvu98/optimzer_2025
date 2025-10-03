@@ -48,7 +48,10 @@ class Conv2D_Cpu(Layer):
         # duỗi trọng số thành vector để thực hiện phép nhân với cols --> chính là phép convulution
         W_col = self.W.reshape(self.out_channels, -1)
 
-        out = cols.dot(W_col) + self.b
+        print(W_col.shape)
+        print(cols.shape)
+
+        out = cols.dot(W_col.T) + self.b
 
         # reshape trả lại kích cỡ out_put của data khi qua lớp tích chập
         out = out.reshape(N, out_H, out_W, self.out_channels).transpose(0, 3, 1, 2)
