@@ -47,6 +47,8 @@ class Conv2D_Cpu(Layer):
 
         # duỗi trọng số thành vector để thực hiện phép nhân với cols --> chính là phép convulution
         W_col = self.W.reshape(self.out_channels, -1)
+        #print(W_col.shape)
+        #print(cols.shape)
 
         out = cols.dot(W_col.T) + self.b
 
@@ -123,16 +125,18 @@ class MaxPool2D_Cpu(Layer):
         # sử dụng im2col biến data dạng imag thành cols theo kernel
         cols, out_H, out_W = UtilComputing.im2col(x=x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
         
+        cols_original = cols.copy()
         # mỗi hàng của matrix col là 1 kernel --> chỉ cần lấy max trên mỗi hàng là được
         # lấy chỉ số của phần tử lớn nhất trong hàng
-        self.argmax = np.argmax(cols, axis=1)
+        cols = cols.reshape(N*out_H*out_W, C, kH*kW)
+        self.argmax = np.argmax(cols, axis=2)
         
         # lọc phần tử max và thu nhỏ matrix
-        out = cols[np.arange(cols.shape[0]), self.argmax]
+        out = np.max(cols, axis=2)
         
         # reshape lại kích cỡ đúng
         out = out.reshape(N, out_H, out_W, C).transpose(0, 3, 1, 2)
-        self.cache = (cols, out_H, out_W)
+        self.cache = (cols_original, out_H, out_W)
         return out
     
     
@@ -184,7 +188,8 @@ class AvgPool2D_Cpu(Layer):
         cols, out_H, out_W = UtilComputing.im2col(x=x, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
         
         # mỗi hàng của matrix col là 1 kernel --> lấy trung bình trên từng hàng
-        out = np.mean(cols, axis=1)
+        cols = cols.reshape(N*out_H*out_W, C, kH*kW) # reshape về dạng (N, matrix_path_kernel)
+        out = np.mean(cols, axis=2)
         
         # reshape lại kích cỡ đúng
         out = out.reshape(N, out_H, out_W, C).transpose(0, 3, 1, 2)
