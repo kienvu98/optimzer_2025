@@ -28,7 +28,7 @@ class UtilComputing:
                 cols[:, :, i, j, :, :] = x_padded[:, :, i:i_end:stride, j:j_end:stride]
                 
         # reshape thành (N*out_H*out_W, C*kH*kW)
-        cols = cols.transpose(0,4,5,1,2,3).reshape(N*out_H*out_W, -1)
+        cols = cols.transpose(0,4,5,1,2,3).reshape(N*out_H*out_W, C*kH*kW)
         return cols, out_H, out_W
     
 
