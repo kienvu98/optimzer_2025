@@ -23,6 +23,9 @@ def split_arrays(X, y, ratio=0.8, shuffe=True):
 def sigmoid_to_label(probabilities, threshold=0.5):
     return (probabilities > threshold).astype(int)
 
+def sofmax_labels(probabilities):
+    return np.argmax(probabilities, axis=1)
+
 
 def accuracy_score(y_true, y_predict):
     return np.mean(y_true == y_predict).astype(np.float32)

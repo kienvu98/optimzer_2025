@@ -39,14 +39,15 @@ class UtilComputing:
         '''
         N, C, H, W = x.shape
         kH, kW= kernel_size
-
-        # trả lại đúng chiều và data từ cols --> image (data sau khi qua convulotion)
-        cols_reshape = cols.reshape(N, kH, kW, C, H, W).transpose(0,3,4,5,1,2)
-        dx_padded = np.zeros((N, C, H + padding * 2, W + padding * 2))
-
-         # lấy thông tin số lượng cửa sổ trượt
+        
+        # lấy thông tin số lượng cửa sổ trượt
         out_H = (H + 2 * padding - kH) // stride + 1
         out_W = (W + 2 * padding - kW) // stride + 1
+
+        # trả lại đúng chiều và data từ cols --> image (data sau khi qua convulotion)
+        #cols_reshape = cols.reshape(N, kH, kW, C, H, W).transpose(0,3,4,5,1,2)
+        cols_reshape = cols.reshape(N, out_H, out_W, C, kH, kW).transpose(0, 3, 4, 5, 1, 2)
+        dx_padded = np.zeros((N, C, H + padding * 2, W + padding * 2))
 
         # đưa từng patch gradient về vị trí đúng trong dx_padded
         for i in range(kH):
@@ -57,5 +58,9 @@ class UtilComputing:
                 
         # cắt bỏ padding để cũng cỡ với data gốc
         dx = dx_padded[:, :, padding:H + padding, padding:W + padding]
+        #if padding > 0:
+        #    dx = dx_padded[:, :, padding:-padding, padding:-padding]
+        #else:
+        #    dx = dx_padded
         return dx
 
