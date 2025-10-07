@@ -2,8 +2,21 @@ from optimzer_project.code.backend.backend import xp as np
 from optimzer_project.code.model.sequential import Model
 from optimzer_project.code.model.model_conv import Conv2D_Cpu, MaxPool2D_Cpu, AvgPool2D_Cpu, Flatten
 from optimzer_project.code.minst_dataset.mnist_dataset import MNIST_Dataset, DataLoader
+import matplotlib.pyplot as plt
 
 
+def show_mnist_sample(dataset, idx=0):
+    """Hiển thị 1 ảnh trong dataset MNIST."""
+    image, label = dataset[idx]
+    if hasattr(image, 'get'):
+        image = image.get()
+    plt.imshow(image, cmap='gray')
+    plt.title(f"Label: {label}")
+    plt.axis('off')
+    plt.show()
+    plt.savefig("mnist_sample.png")
+    
+    
 def main():
     
     #model = Model([
@@ -36,5 +49,7 @@ def main():
         print("Batch shape:", X_batch.shape)
         print("Label shape:", y_batch.shape)
         break 
+    
+    show_mnist_sample(train_dataset, idx=123)
 
 main()
