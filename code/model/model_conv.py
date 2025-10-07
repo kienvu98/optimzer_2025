@@ -47,8 +47,6 @@ class Conv2D_Cpu(Layer):
 
         # duỗi trọng số thành vector để thực hiện phép nhân với cols --> chính là phép convulution
         W_col = self.W.reshape(self.out_channels, -1)
-        print(W_col.shape)
-        print(cols.shape)
 
         out = cols.dot(W_col.T) + self.b
 
@@ -146,15 +144,17 @@ class MaxPool2D_Cpu(Layer):
         '''
         
         cols, out_H, out_W = self.cache
+        C = grad_out.shape[1]
         
         # chuyển grad_out về thành vector 1 chiều
-        grad_out_flatten = grad_out.transpose(0, 2, 3, 1).ravel()
+        grad_out_flatten = grad_out.transpose(0, 2, 3, 1).reshape(-1, C)
         
         # tạo ma trận cùng cỡ với cols
         dcols = np.zeros_like(cols)
         
         # gán gradient vào các vị trí max 
-        dcols[np.arange(cols.shape[0]), self.argmax] = grad_out_flatten
+        for i in range(C):
+            np.add.at(dcols,(np.arange(cols.shape[0]), self.argmax[:, i]), grad_out_flatten[:, i])
         
         # biến về kích cỡ của ảnh của dx
         dx = UtilComputing.col2im(x=self.x, cols=dcols, kernel_size=self.kernel_size, stride=self.stride, padding=self.padding)
@@ -224,7 +224,7 @@ class Flatten(Layer):
     
     def __init__(self, name=None):
         super().__init__()
-        self.input_shape = None # để lưu chiều của để backward
+        self.input = None # để lưu chiều của để backward
         self.name = name or f"Flatten_{id(self)}"
         
     
@@ -232,7 +232,7 @@ class Flatten(Layer):
         '''
         hàm triển khai forward
         '''
-        self.input_shape = x.shape
+        self.input = x.shape
         return x.reshape(x.shape[0], -1)
     
     
@@ -240,4 +240,4 @@ class Flatten(Layer):
         '''
         hàm triển khai backward
         '''
-        return grad_out.reshape(self.input_shape) # đạo hàm trả lại chiều
+        return grad_out.reshape(self.input) # đạo hàm trả lại chiều

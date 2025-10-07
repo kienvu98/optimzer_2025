@@ -26,7 +26,6 @@ def download_mnist(data_dir: str="./data"):
         if not os.path.exists(path):
             print(f"Downloading {fname} ...")
             urllib.request.urlretrieve(base_url + fname, path)
-    print("✅ MNIST downloaded.")
     
     
 def load_mnist_images(path: str) -> np.ndarray:
@@ -108,7 +107,7 @@ class DataLoader:
             
             batch = [self.dataset[j] for j in batch_idx]
             xs, ys = zip(*batch)
-            xs = np.stack(xs, axis=0) # (batch, channel, 28, 28)
+            xs = np.stack(xs, axis=0)[:, None, :,:] # (batch, channel, 28, 28)
             ys = np.array(ys, dtype=np.int64)
             
             yield xs, ys
@@ -116,6 +115,11 @@ class DataLoader:
     def __len__(self):
         n = len(self.dataset)
         return n // self.batch_size if self.drop_last else (n + self.batch_size - 1) // self.batch_size    
+    
+    
+    @classmethod
+    def from_arrays(cls,dataset, batch_size=64, shuffle=True, drop_last=False):
+        return cls(dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
     
         
         

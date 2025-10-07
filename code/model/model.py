@@ -36,7 +36,7 @@ class Dense(Layer):
     layer linear Z = X * W  + b
     '''
     
-    def __init__(self, in_features, out_features, optimzer, name=None):
+    def __init__(self, in_features, out_features, optimzer=None, name=None):
         '''
         in_features: chiều dữ liệu đầu vào (chiều của data)
         out_features: chiều dữ liệu đầu ra (chiều của hidden)
